@@ -14,8 +14,9 @@ const serverSchema = z.object({
   WHATSAPP_APP_SECRET: z.string().min(1),
   WHATSAPP_PHONE_NUMBER_ID: z.string().min(1),
 
-  ANTHROPIC_API_KEY: z.string().min(1),
-  OPENAI_API_KEY: z.string().min(1),
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  OPENAI_API_KEY: z.string().min(1).optional(),
+  GROQ_API_KEY: z.string().min(1).optional(),
 
   UPSTASH_REDIS_REST_URL: z.url(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),

@@ -1,4 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
+import {
+  verifyWebhookSignature,
+  parseWebhookPayload,
+  isMessageDuplicate,
+} from "@/lib/whatsapp/webhook-handler";
+import {
+  processInboundMessage,
+  processStatusUpdate,
+} from "@/lib/whatsapp/message-processor";
 
 // WhatsApp webhook verification (GET)
 export async function GET(req: NextRequest) {
@@ -14,9 +24,49 @@ export async function GET(req: NextRequest) {
 }
 
 // WhatsApp incoming messages (POST)
-export async function POST(req: Request) {
-  // TODO: Implement in Block 2
-  const body = await req.json();
-  console.log("WhatsApp webhook received:", JSON.stringify(body).slice(0, 200));
+export async function POST(req: NextRequest) {
+  const rawBody = await req.text();
+
+  // Verify signature
+  const signature = req.headers.get("x-hub-signature-256");
+  const appSecret = process.env.WHATSAPP_APP_SECRET;
+
+  if (
+    !appSecret ||
+    !verifyWebhookSignature(rawBody, signature, appSecret)
+  ) {
+    console.error("Invalid webhook signature");
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  // Parse payload
+  const payload = parseWebhookPayload(rawBody);
+  if (!payload) {
+    return NextResponse.json({ status: "ok" });
+  }
+
+  // Process in background after returning 200
+  after(async () => {
+    for (const msg of payload.messages) {
+      try {
+        if (await isMessageDuplicate(msg.messageId)) {
+          console.log(`Skipping duplicate message: ${msg.messageId}`);
+          continue;
+        }
+        await processInboundMessage(msg);
+      } catch (err) {
+        console.error(`Error processing message ${msg.messageId}:`, err);
+      }
+    }
+
+    for (const status of payload.statuses) {
+      try {
+        await processStatusUpdate(status);
+      } catch (err) {
+        console.error(`Error processing status ${status.messageId}:`, err);
+      }
+    }
+  });
+
   return NextResponse.json({ status: "ok" });
 }

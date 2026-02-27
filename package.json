@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
+    "@aws-sdk/client-s3": "^3.999.0",
     "@clerk/localizations": "^3.37.0",
     "@clerk/nextjs": "^6.38.2",
     "@neondatabase/serverless": "^1.0.2",
