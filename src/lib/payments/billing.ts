@@ -1,4 +1,13 @@
-// Stripe Billing for SaaS subscriptions
-// TODO: Implement in Block 3
+import { getStripe } from "./stripe";
+import { APP_URL } from "@/config/constants";
 
-export {};
+export async function createBillingPortalSession(stripeCustomerId: string) {
+  const stripe = getStripe();
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: stripeCustomerId,
+    return_url: `${APP_URL}/billing`,
+  });
+
+  return { url: session.url };
+}

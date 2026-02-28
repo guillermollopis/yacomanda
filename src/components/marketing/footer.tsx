@@ -11,8 +11,16 @@ export function MarketingFooter() {
             <h3 className="font-semibold">Producto</h3>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link href="/" className="hover:text-foreground">
-                  Inicio
+                <Link href="/#como-funciona" className="hover:text-foreground">
+                  Como funciona
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/#funcionalidades"
+                  className="hover:text-foreground"
+                >
+                  Funcionalidades
                 </Link>
               </li>
               <li>
@@ -51,15 +59,20 @@ export function MarketingFooter() {
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>
                 <a
-                  href="mailto:guillermollopis@protforge.com"
+                  href="mailto:hola@yacomanda.com"
                   className="hover:text-foreground"
                 >
-                  guillermollopis@protforge.com
+                  hola@yacomanda.com
                 </a>
               </li>
               <li>
-                <a href="tel:+34636873210" className="hover:text-foreground">
-                  +34 636 873 210
+                <a
+                  href="https://wa.me/34636873210"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground"
+                >
+                  WhatsApp: +34 636 873 210
                 </a>
               </li>
               <li>

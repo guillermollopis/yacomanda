@@ -42,6 +42,7 @@ export const businesses = pgTable(
     // Stripe
     stripeAccountId: text("stripe_account_id"),
     stripeSubscriptionId: text("stripe_subscription_id"),
+    stripeCustomerId: text("stripe_customer_id"),
 
     // Redsys (future)
     redsysMerchantCode: text("redsys_merchant_code"),
@@ -68,6 +69,7 @@ export const businesses = pgTable(
     deliveryEnabled: boolean("delivery_enabled").default(false),
     pickupEnabled: boolean("pickup_enabled").default(true),
 
+    onboardingCompleted: boolean("onboarding_completed").default(false),
     logoUrl: text("logo_url"),
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),

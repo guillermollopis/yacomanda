@@ -1,0 +1,913 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { trpc } from "@/lib/trpc/react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { BUSINESS_TYPES, BOT_TONES } from "@/config/constants";
+import {
+  Store,
+  MessageSquare,
+  UtensilsCrossed,
+  CreditCard,
+  Bot,
+  Rocket,
+  ArrowRight,
+  ArrowLeft,
+  SkipForward,
+  Plus,
+  Trash2,
+  Check,
+  PartyPopper,
+  Camera,
+} from "lucide-react";
+import { MenuImport } from "@/components/catalog/menu-import";
+
+const STEPS = [
+  { label: "Tu negocio", icon: Store },
+  { label: "WhatsApp", icon: MessageSquare },
+  { label: "Carta", icon: UtensilsCrossed },
+  { label: "Pagos", icon: CreditCard },
+  { label: "Bot", icon: Bot },
+  { label: "Activar", icon: Rocket },
+] as const;
+
+const BUSINESS_TYPE_LABELS: Record<string, string> = {
+  restaurant: "Restaurante",
+  bar: "Bar",
+  cafe: "Cafetería",
+  bakery: "Panadería",
+};
+
+const TONE_LABELS: Record<string, string> = {
+  formal: "Formal (usted)",
+  informal: "Informal (tú)",
+  muy_informal: "Muy informal (coloquial)",
+};
+
+export default function OnboardingPage() {
+  const router = useRouter();
+  const [step, setStep] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const { data: status, isLoading } = trpc.onboarding.getStatus.useQuery();
+
+  // Redirect if already completed
+  useEffect(() => {
+    if (status?.onboardingCompleted) {
+      router.replace("/dashboard");
+    }
+  }, [status, router]);
+
+  // Infer starting step from existing data
+  useEffect(() => {
+    if (!status || status.onboardingCompleted) return;
+    if (!status.hasBusinessId) {
+      setStep(0);
+    } else if (!status.business?.hasCatalogItems) {
+      setStep(2);
+    }
+    // Otherwise stay at wherever the user left off (default 0)
+  }, [status]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">Cargando...</p>
+      </div>
+    );
+  }
+
+  if (status?.onboardingCompleted) {
+    return null;
+  }
+
+  return (
+    <div className="mx-auto min-h-screen max-w-2xl px-4 py-8">
+      {/* Header */}
+      <div className="mb-8 text-center">
+        <h1 className="text-2xl font-bold">Configura tu negocio</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Paso {step + 1} de {STEPS.length}
+        </p>
+      </div>
+
+      {/* Progress bar */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          {STEPS.map((s, i) => (
+            <div key={i} className="flex flex-col items-center gap-1">
+              <div
+                className={`flex size-9 items-center justify-center rounded-full border-2 transition-colors ${
+                  i < step
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : i === step
+                      ? "border-primary text-primary"
+                      : "border-muted text-muted-foreground"
+                }`}
+              >
+                {i < step ? (
+                  <Check className="size-4" />
+                ) : (
+                  <s.icon className="size-4" />
+                )}
+              </div>
+              <span
+                className={`hidden text-[10px] sm:block ${
+                  i <= step
+                    ? "font-medium text-foreground"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {s.label}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="relative mt-2 h-1.5 rounded-full bg-muted">
+          <div
+            className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all"
+            style={{ width: `${(step / (STEPS.length - 1)) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Confetti overlay */}
+      {showConfetti && <ConfettiOverlay />}
+
+      {/* Step content */}
+      {step === 0 && (
+        <Step1BasicInfo
+          onNext={() => setStep(1)}
+          hasBusinessId={status?.hasBusinessId ?? false}
+        />
+      )}
+      {step === 1 && (
+        <Step2WhatsApp
+          onNext={() => setStep(2)}
+          onBack={() => setStep(0)}
+          businessPhone={status?.business?.phone}
+        />
+      )}
+      {step === 2 && (
+        <Step3Menu
+          onNext={() => setStep(3)}
+          onBack={() => setStep(1)}
+        />
+      )}
+      {step === 3 && (
+        <Step4Payments
+          onNext={() => setStep(4)}
+          onBack={() => setStep(2)}
+        />
+      )}
+      {step === 4 && (
+        <Step5BotConfig
+          onNext={() => setStep(5)}
+          onBack={() => setStep(3)}
+          onSkip={() => setStep(5)}
+        />
+      )}
+      {step === 5 && (
+        <Step6Activate
+          onBack={() => setStep(4)}
+          onComplete={() => {
+            setShowConfetti(true);
+            setTimeout(() => router.replace("/dashboard"), 3000);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ==================== STEP 1: Basic Info ====================
+
+function Step1BasicInfo({
+  onNext,
+  hasBusinessId,
+}: {
+  onNext: () => void;
+  hasBusinessId: boolean;
+}) {
+  const [form, setForm] = useState({
+    name: "",
+    type: "restaurant" as string,
+    city: "",
+    phone: "",
+  });
+
+  const utils = trpc.useUtils();
+
+  const createMutation = trpc.onboarding.createBusiness.useMutation({
+    onSuccess: () => {
+      utils.onboarding.getStatus.invalidate();
+      onNext();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  if (hasBusinessId) {
+    // Already created — just proceed
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Datos básicos</CardTitle>
+          <CardDescription>Tu negocio ya está creado.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-end">
+            <Button onClick={onNext}>
+              Siguiente
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const canSubmit = form.name && form.city && form.phone;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Datos de tu negocio</CardTitle>
+        <CardDescription>
+          Empecemos con la información básica de tu restaurante.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Nombre del negocio *</Label>
+          <Input
+            id="name"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Ej: Bar El Rincón"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Tipo de negocio</Label>
+          <Select
+            value={form.type}
+            onValueChange={(v) => setForm({ ...form, type: v })}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {BUSINESS_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {BUSINESS_TYPE_LABELS[t] ?? t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="city">Ciudad *</Label>
+          <Input
+            id="city"
+            value={form.city}
+            onChange={(e) => setForm({ ...form, city: e.target.value })}
+            placeholder="Ej: Barcelona"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="phone">Teléfono *</Label>
+          <Input
+            id="phone"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            placeholder="Ej: +34 612 345 678"
+          />
+        </div>
+
+        <div className="flex justify-end pt-2">
+          <Button
+            onClick={() =>
+              createMutation.mutate({
+                name: form.name,
+                type: form.type as (typeof BUSINESS_TYPES)[number],
+                city: form.city,
+                phone: form.phone,
+              })
+            }
+            disabled={!canSubmit || createMutation.isPending}
+          >
+            {createMutation.isPending ? "Creando..." : "Siguiente"}
+            <ArrowRight className="ml-2 size-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ==================== STEP 2: WhatsApp ====================
+
+function Step2WhatsApp({
+  onNext,
+  onBack,
+  businessPhone,
+}: {
+  onNext: () => void;
+  onBack: () => void;
+  businessPhone?: string | null;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>WhatsApp Business</CardTitle>
+        <CardDescription>
+          Nosotros nos encargamos de configurar WhatsApp por ti.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <MessageSquare className="mt-0.5 size-5 text-blue-600 shrink-0" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-blue-900">
+                Nuestro equipo lo configura todo
+              </p>
+              <p className="text-sm text-blue-700">
+                Conectaremos WhatsApp Business API al número de tu negocio.
+                No necesitas hacer nada en Meta ni crear cuentas técnicas.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {businessPhone && (
+          <div className="flex items-center gap-2 rounded-lg border p-3">
+            <Check className="size-4 text-green-600 shrink-0" />
+            <span className="text-sm">
+              Número de WhatsApp:{" "}
+              <span className="font-medium">{businessPhone}</span>
+            </span>
+          </div>
+        )}
+
+        <div className="space-y-2 rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">¿Cómo funciona?</p>
+          <ol className="ml-4 list-decimal space-y-1">
+            <li>Completa este asistente de configuración</li>
+            <li>Nuestro equipo recibe una notificación automática</li>
+            <li>Configuramos WhatsApp Business en 24-48h</li>
+            <li>Te avisamos por email cuando esté listo</li>
+          </ol>
+        </div>
+
+        <div className="flex justify-between pt-2">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="mr-2 size-4" />
+            Atrás
+          </Button>
+          <Button onClick={onNext}>
+            Siguiente
+            <ArrowRight className="ml-2 size-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ==================== STEP 3: Menu Items ====================
+
+function Step3Menu({
+  onNext,
+  onBack,
+}: {
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  const [mode, setMode] = useState<"choose" | "photo" | "manual">("choose");
+  const [items, setItems] = useState<
+    { name: string; price: string; category: string }[]
+  >([{ name: "", price: "", category: "" }]);
+
+  const addItemMutation = trpc.onboarding.addCatalogItem.useMutation({
+    onError: (err) => toast.error(err.message),
+  });
+
+  function addRow() {
+    setItems([...items, { name: "", price: "", category: "" }]);
+  }
+
+  function removeRow(idx: number) {
+    setItems(items.filter((_, i) => i !== idx));
+  }
+
+  function updateRow(
+    idx: number,
+    field: "name" | "price" | "category",
+    value: string
+  ) {
+    const updated = [...items];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setItems(updated);
+  }
+
+  async function saveAll() {
+    const valid = items.filter((item) => item.name && item.price);
+    if (valid.length === 0) {
+      toast.error("Añade al menos un producto");
+      return;
+    }
+
+    for (const item of valid) {
+      await addItemMutation.mutateAsync({
+        name: item.name,
+        price: item.price,
+        category: item.category || undefined,
+      });
+    }
+    toast.success(`${valid.length} producto(s) añadidos`);
+    onNext();
+  }
+
+  // Choice screen: photo or manual
+  if (mode === "choose") {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Tu carta</CardTitle>
+          <CardDescription>
+            ¿Como prefieres añadir tus productos?
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <button
+            onClick={() => setMode("photo")}
+            className="flex w-full items-center gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-accent/50"
+          >
+            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+              <Camera className="size-5 text-primary" />
+            </div>
+            <div>
+              <p className="font-medium">Foto de la carta</p>
+              <p className="text-sm text-muted-foreground">
+                Sube una foto y la IA extrae los productos automaticamente
+              </p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setMode("manual")}
+            className="flex w-full items-center gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-accent/50"
+          >
+            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+              <Plus className="size-5 text-primary" />
+            </div>
+            <div>
+              <p className="font-medium">Añadir manualmente</p>
+              <p className="text-sm text-muted-foreground">
+                Escribe los productos uno a uno
+              </p>
+            </div>
+          </button>
+
+          <div className="flex justify-between pt-2">
+            <Button variant="outline" onClick={onBack}>
+              <ArrowLeft className="mr-2 size-4" />
+              Atrás
+            </Button>
+            <Button variant="ghost" onClick={() => { toast.info("Podrás añadir productos después desde el panel"); onNext(); }}>
+              <SkipForward className="mr-2 size-4" />
+              Saltar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Photo import mode
+  if (mode === "photo") {
+    return (
+      <div className="space-y-4">
+        <MenuImport
+          onImport={(imported) => {
+            setItems(
+              imported.map((i) => ({
+                name: i.name,
+                price: i.price,
+                category: i.category ?? "",
+              }))
+            );
+            setMode("manual");
+            toast.success(`${imported.length} productos importados. Revisa y confirma.`);
+          }}
+        />
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setMode("choose")}>
+            <ArrowLeft className="mr-2 size-4" />
+            Volver
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Manual entry mode (also used after photo import for review)
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Tu carta</CardTitle>
+        <CardDescription>
+          Revisa los productos y edita lo que necesites. Podrás completar la
+          carta después desde el panel.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {items.map((item, idx) => (
+          <div key={idx} className="flex items-end gap-2">
+            <div className="flex-1 space-y-1">
+              {idx === 0 && (
+                <Label className="text-xs">Nombre *</Label>
+              )}
+              <Input
+                value={item.name}
+                onChange={(e) => updateRow(idx, "name", e.target.value)}
+                placeholder="Ej: Hamburguesa clásica"
+              />
+            </div>
+            <div className="w-24 space-y-1">
+              {idx === 0 && <Label className="text-xs">Precio *</Label>}
+              <Input
+                value={item.price}
+                onChange={(e) => updateRow(idx, "price", e.target.value)}
+                placeholder="8.50"
+              />
+            </div>
+            <div className="w-28 space-y-1 hidden sm:block">
+              {idx === 0 && (
+                <Label className="text-xs">Categoría</Label>
+              )}
+              <Input
+                value={item.category}
+                onChange={(e) =>
+                  updateRow(idx, "category", e.target.value)
+                }
+                placeholder="Platos"
+              />
+            </div>
+            {items.length > 1 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                onClick={() => removeRow(idx)}
+              >
+                <Trash2 className="size-4 text-muted-foreground" />
+              </Button>
+            )}
+          </div>
+        ))}
+
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={addRow}>
+            <Plus className="mr-1 size-3" />
+            Añadir producto
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setMode("choose")}>
+            <Camera className="mr-1 size-3" />
+            Importar otra foto
+          </Button>
+        </div>
+
+        <div className="flex justify-between pt-2">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="mr-2 size-4" />
+            Atrás
+          </Button>
+          <Button
+            onClick={saveAll}
+            disabled={addItemMutation.isPending}
+          >
+            {addItemMutation.isPending ? "Guardando..." : "Siguiente"}
+            <ArrowRight className="ml-2 size-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ==================== STEP 4: Payments ====================
+
+function Step4Payments({
+  onNext,
+  onBack,
+}: {
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  const [wantsOnline, setWantsOnline] = useState<boolean | null>(null);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Pagos online</CardTitle>
+        <CardDescription>
+          ¿Quieres que tus clientes puedan pagar directamente desde WhatsApp?
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setWantsOnline(true)}
+            className={`rounded-lg border-2 p-4 text-left transition-colors ${
+              wantsOnline === true
+                ? "border-primary bg-primary/5"
+                : "border-muted hover:border-muted-foreground/30"
+            }`}
+          >
+            <CreditCard className="mb-2 size-5 text-primary" />
+            <p className="font-medium text-sm">Pagos online</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Tus clientes pueden pagar con tarjeta. Nuestro equipo te ayuda a
+              configurarlo.
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setWantsOnline(false)}
+            className={`rounded-lg border-2 p-4 text-left transition-colors ${
+              wantsOnline === false
+                ? "border-primary bg-primary/5"
+                : "border-muted hover:border-muted-foreground/30"
+            }`}
+          >
+            <Store className="mb-2 size-5 text-muted-foreground" />
+            <p className="font-medium text-sm">Solo efectivo</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Los clientes pagan en el local. Puedes activar pagos online más
+              tarde.
+            </p>
+          </button>
+        </div>
+
+        {wantsOnline === true && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-2">
+            <p className="text-sm font-medium text-blue-900">
+              Nosotros lo configuramos
+            </p>
+            <p className="text-sm text-blue-700">
+              Al completar el asistente, nuestro equipo recibirá una
+              notificación y te ayudará a configurar Stripe en 24-48h. Te
+              contactaremos por email.
+            </p>
+          </div>
+        )}
+
+        <div className="flex justify-between pt-2">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="mr-2 size-4" />
+            Atrás
+          </Button>
+          <Button onClick={onNext} disabled={wantsOnline === null}>
+            Siguiente
+            <ArrowRight className="ml-2 size-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ==================== STEP 5: Bot Config ====================
+
+function Step5BotConfig({
+  onNext,
+  onBack,
+  onSkip,
+}: {
+  onNext: () => void;
+  onBack: () => void;
+  onSkip: () => void;
+}) {
+  const [form, setForm] = useState({
+    botTone: "informal" as string,
+    welcomeMessage: "",
+    minPreparationMinutes: 30,
+  });
+
+  const updateMutation = trpc.onboarding.updateBotConfig.useMutation({
+    onSuccess: () => onNext(),
+    onError: (err) => toast.error(err.message),
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Personaliza tu bot</CardTitle>
+        <CardDescription>
+          Configura cómo se comunicará el bot con tus clientes.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label>Tono del bot</Label>
+          <Select
+            value={form.botTone}
+            onValueChange={(v) => setForm({ ...form, botTone: v })}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {BOT_TONES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {TONE_LABELS[t] ?? t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Mensaje de bienvenida</Label>
+          <Textarea
+            value={form.welcomeMessage}
+            onChange={(e) =>
+              setForm({ ...form, welcomeMessage: e.target.value })
+            }
+            placeholder="¡Hola! Bienvenido a nuestro restaurante. ¿Qué te apetece hoy?"
+            rows={3}
+            maxLength={500}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="prepTime">
+            Tiempo de preparación (minutos)
+          </Label>
+          <Input
+            id="prepTime"
+            type="number"
+            min={0}
+            max={240}
+            value={form.minPreparationMinutes}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                minPreparationMinutes: parseInt(e.target.value) || 0,
+              })
+            }
+            className="w-32"
+          />
+        </div>
+
+        <div className="flex items-center justify-between pt-2">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="mr-2 size-4" />
+            Atrás
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={onSkip}>
+              <SkipForward className="mr-1 size-4" />
+              Omitir
+            </Button>
+            <Button
+              onClick={() =>
+                updateMutation.mutate({
+                  botTone: form.botTone as (typeof BOT_TONES)[number],
+                  welcomeMessage: form.welcomeMessage || undefined,
+                  minPreparationMinutes: form.minPreparationMinutes,
+                })
+              }
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? "Guardando..." : "Siguiente"}
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ==================== STEP 6: Activate ====================
+
+function Step6Activate({
+  onBack,
+  onComplete,
+}: {
+  onBack: () => void;
+  onComplete: () => void;
+}) {
+  const completeMutation = trpc.onboarding.complete.useMutation({
+    onSuccess: () => onComplete(),
+    onError: (err) => toast.error(err.message),
+  });
+
+  return (
+    <Card>
+      <CardHeader className="text-center">
+        <div className="mx-auto mb-2 flex size-16 items-center justify-center rounded-full bg-primary/10">
+          <Rocket className="size-8 text-primary" />
+        </div>
+        <CardTitle>¡Todo listo!</CardTitle>
+        <CardDescription>
+          Tu negocio está configurado. Activa el bot para empezar a recibir
+          pedidos por WhatsApp.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2 rounded-lg border p-4 text-sm">
+          <p>Al activar:</p>
+          <ul className="ml-4 list-disc space-y-1 text-muted-foreground">
+            <li>El bot responderá automáticamente a los mensajes de WhatsApp</li>
+            <li>Los pedidos aparecerán en tu panel de control</li>
+            <li>Recibirás notificaciones de nuevos pedidos</li>
+            <li>Puedes pausar el bot en cualquier momento desde Ajustes</li>
+          </ul>
+        </div>
+
+        <div className="flex items-center justify-between pt-2">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="mr-2 size-4" />
+            Atrás
+          </Button>
+          <Button
+            size="lg"
+            onClick={() => completeMutation.mutate()}
+            disabled={completeMutation.isPending}
+          >
+            <PartyPopper className="mr-2 size-4" />
+            {completeMutation.isPending
+              ? "Activando..."
+              : "Activar y empezar"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ==================== Confetti ====================
+
+function ConfettiOverlay() {
+  return (
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
+      {Array.from({ length: 50 }).map((_, i) => (
+        <div
+          key={i}
+          className="absolute animate-confetti"
+          style={{
+            left: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 2}s`,
+            animationDuration: `${2 + Math.random() * 3}s`,
+            backgroundColor: [
+              "#f59e0b",
+              "#3b82f6",
+              "#10b981",
+              "#ef4444",
+              "#8b5cf6",
+              "#ec4899",
+            ][i % 6],
+            width: `${6 + Math.random() * 6}px`,
+            height: `${6 + Math.random() * 6}px`,
+            borderRadius: Math.random() > 0.5 ? "50%" : "0",
+          }}
+        />
+      ))}
+      <div className="flex h-full items-center justify-center">
+        <div className="rounded-2xl bg-background/95 p-8 text-center shadow-xl">
+          <PartyPopper className="mx-auto mb-4 size-12 text-primary" />
+          <h2 className="text-2xl font-bold">¡Enhorabuena!</h2>
+          <p className="mt-2 text-muted-foreground">
+            Tu negocio está listo. Redirigiendo al panel...
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

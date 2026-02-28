@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
+import { Toaster } from "@/components/ui/sonner";
+import { CookieConsent } from "@/components/cookie-consent";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,14 +25,29 @@ export const metadata: Metadata = {
     template: "%s | YaComanda",
   },
   description:
-    "Automatiza los pedidos de tu restaurante por WhatsApp con inteligencia artificial. Un producto de PROTFORGE SL.",
+    "Automatiza los pedidos de tu restaurante por WhatsApp con inteligencia artificial. Sin comisiones. Sin Glovo. Cobra con Bizum. Listo en 15 minutos.",
+  keywords: [
+    "pedidos whatsapp",
+    "restaurante",
+    "automatizar pedidos",
+    "bizum",
+    "bot whatsapp",
+    "ia restaurante",
+    "yacomanda",
+  ],
   openGraph: {
     type: "website",
     locale: "es_ES",
     siteName: "YaComanda",
     title: "YaComanda — Pedidos por WhatsApp con IA",
     description:
-      "Automatiza los pedidos de tu restaurante por WhatsApp con inteligencia artificial. Un producto de PROTFORGE SL.",
+      "Automatiza los pedidos de tu restaurante por WhatsApp con IA. Sin comisiones. Cobra con Bizum y tarjeta.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "YaComanda — Pedidos por WhatsApp con IA",
+    description:
+      "Automatiza los pedidos de tu restaurante por WhatsApp con IA. Sin comisiones. Cobra con Bizum y tarjeta.",
   },
   robots: {
     index: true,
@@ -47,11 +64,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const body = (
-    <html lang="es">
+    <html lang="es" className="scroll-smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <Toaster />
+        <CookieConsent />
       </body>
     </html>
   );
