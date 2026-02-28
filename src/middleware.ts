@@ -8,6 +8,9 @@ const isProtectedRoute = createRouteMatcher([
 const isPublicRoute = createRouteMatcher([
   "/",
   "/pricing",
+  "/privacidad",
+  "/terminos",
+  "/contacto",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks(.*)",
