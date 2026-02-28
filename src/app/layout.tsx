@@ -15,9 +15,27 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "YaComanda — Pedidos por WhatsApp con IA",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://yacomanda.com"
+  ),
+  title: {
+    default: "YaComanda — Pedidos por WhatsApp con IA",
+    template: "%s | YaComanda",
+  },
   description:
-    "Automatiza los pedidos de tu restaurante por WhatsApp con inteligencia artificial",
+    "Automatiza los pedidos de tu restaurante por WhatsApp con inteligencia artificial. Un producto de PROTFORGE SL.",
+  openGraph: {
+    type: "website",
+    locale: "es_ES",
+    siteName: "YaComanda",
+    title: "YaComanda — Pedidos por WhatsApp con IA",
+    description:
+      "Automatiza los pedidos de tu restaurante por WhatsApp con inteligencia artificial. Un producto de PROTFORGE SL.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
