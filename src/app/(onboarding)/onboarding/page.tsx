@@ -116,11 +116,11 @@ export default function OnboardingPage() {
           {STEPS.map((s, i) => (
             <div key={i} className="flex flex-col items-center gap-1">
               <div
-                className={`flex size-9 items-center justify-center rounded-full border-2 transition-colors ${
+                className={`flex size-9 items-center justify-center rounded-full border-2 transition-all ${
                   i < step
-                    ? "border-primary bg-primary text-primary-foreground"
+                    ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20"
                     : i === step
-                      ? "border-primary text-primary"
+                      ? "border-primary bg-primary/10 text-primary shadow-sm shadow-primary/10"
                       : "border-muted text-muted-foreground"
                 }`}
               >
@@ -144,7 +144,7 @@ export default function OnboardingPage() {
         </div>
         <div className="relative mt-2 h-1.5 rounded-full bg-muted">
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all"
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-emerald-400 transition-all shadow-sm shadow-primary/20"
             style={{ width: `${(step / (STEPS.length - 1)) * 100}%` }}
           />
         </div>

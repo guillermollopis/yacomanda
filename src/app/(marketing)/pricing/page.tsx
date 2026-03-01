@@ -105,11 +105,13 @@ export default function PricingPage() {
           <Card
             key={plan.name}
             className={
-              plan.highlight ? "relative border-primary shadow-md" : ""
+              plan.highlight
+                ? "relative scale-105 border-2 border-primary shadow-xl shadow-primary/10"
+                : "card-hover"
             }
           >
             {plan.highlight && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-medium text-primary-foreground">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary to-emerald-400 px-4 py-0.5 text-xs font-medium text-white shadow-md">
                 Mas popular
               </div>
             )}
@@ -134,7 +136,7 @@ export default function PricingPage() {
               </ul>
               <Link href="/sign-up" className="mt-6 block">
                 <Button
-                  className="w-full"
+                  className={`w-full ${plan.highlight ? "bg-gradient-to-r from-primary to-primary/80 shadow-md shadow-primary/20" : ""}`}
                   variant={plan.highlight ? "default" : "outline"}
                 >
                   Empezar gratis
@@ -147,7 +149,7 @@ export default function PricingPage() {
 
       {/* Kit Digital badge */}
       <div className="mt-10 rounded-xl border border-primary/20 bg-primary/5 p-6 text-center">
-        <p className="text-lg font-semibold">🏛️ Kit Digital</p>
+        <p className="text-lg font-semibold">Kit Digital</p>
         <p className="mt-2 text-sm text-muted-foreground">
           YaComanda es elegible como solucion de comercio electronico dentro del
           programa Kit Digital del Gobierno de Espana. Puedes financiar hasta el
@@ -173,7 +175,7 @@ export default function PricingPage() {
               <TableRow>
                 <TableHead className="w-[200px]">Funcionalidad</TableHead>
                 <TableHead className="text-center">Esencial</TableHead>
-                <TableHead className="text-center">Profesional</TableHead>
+                <TableHead className="text-center font-bold text-primary">Profesional</TableHead>
                 <TableHead className="text-center">Negocio</TableHead>
               </TableRow>
             </TableHeader>
@@ -184,7 +186,7 @@ export default function PricingPage() {
                   <TableCell className="text-center">
                     <FeatureCell value={feature.esencial} />
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center bg-primary/5">
                     <FeatureCell value={feature.profesional} />
                   </TableCell>
                   <TableCell className="text-center">

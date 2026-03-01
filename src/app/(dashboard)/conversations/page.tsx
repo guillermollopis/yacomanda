@@ -83,7 +83,7 @@ export default function ConversationsPage() {
                   onClick={() => setSelectedId(conv.id)}
                   className={cn(
                     "flex w-full items-start gap-3 border-b p-3 text-left transition-colors hover:bg-accent/50",
-                    selectedId === conv.id && "bg-accent"
+                    selectedId === conv.id && "border-l-2 border-l-primary bg-accent"
                   )}
                 >
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
@@ -286,10 +286,10 @@ function ChatView({
             >
               <div
                 className={cn(
-                  "max-w-[75%] rounded-2xl px-4 py-2 text-sm",
+                  "max-w-[75%] px-4 py-2 text-sm shadow-sm",
                   msg.direction === "outbound"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                    ? "rounded-2xl rounded-br-md bg-primary text-primary-foreground"
+                    : "rounded-2xl rounded-bl-md bg-muted"
                 )}
               >
                 {msg.messageType === "text" ? (

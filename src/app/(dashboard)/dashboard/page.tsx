@@ -76,6 +76,7 @@ export default function DashboardPage() {
           title="Pedidos hoy"
           value={data?.totalOrders ?? 0}
           icon={ShoppingCart}
+          accent="green"
           comparison={
             data
               ? {
@@ -89,6 +90,7 @@ export default function DashboardPage() {
           title="Ingresos hoy"
           value={formatCurrency(data?.revenue ?? "0")}
           icon={DollarSign}
+          accent="amber"
           comparison={
             data
               ? {
@@ -102,12 +104,14 @@ export default function DashboardPage() {
           title="Ticket medio"
           value={formatCurrency(data?.avgTicket ?? "0")}
           icon={Receipt}
+          accent="blue"
         />
         <KpiCard
           title="Pendientes"
           value={data?.pendingCount ?? 0}
           description="Pedidos esperando acción"
           icon={Clock}
+          accent="pink"
         />
       </div>
 

@@ -26,7 +26,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const PIE_COLORS = ["#3b82f6", "#f59e0b"];
+const PIE_COLORS = ["#22c55e", "#f59e0b"];
 
 export default function AnalyticsPage() {
   const [from, setFrom] = useState(() => {
@@ -123,7 +123,7 @@ export default function AnalyticsPage() {
                     <Line
                       type="monotone"
                       dataKey="count"
-                      stroke="hsl(var(--primary))"
+                      stroke="var(--color-primary)"
                       strokeWidth={2}
                       dot={false}
                     />
@@ -160,7 +160,7 @@ export default function AnalyticsPage() {
                     />
                     <Bar
                       dataKey="revenue"
-                      fill="hsl(var(--primary))"
+                      fill="var(--color-primary)"
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
@@ -195,7 +195,7 @@ export default function AnalyticsPage() {
                     />
                     <Bar
                       dataKey="totalQuantity"
-                      fill="hsl(var(--primary))"
+                      fill="var(--color-primary)"
                       radius={[0, 4, 4, 0]}
                     />
                   </BarChart>
@@ -228,7 +228,7 @@ export default function AnalyticsPage() {
                     />
                     <Bar
                       dataKey="count"
-                      fill="hsl(var(--primary))"
+                      fill="var(--color-primary)"
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
@@ -274,7 +274,7 @@ export default function AnalyticsPage() {
                   </ResponsiveContainer>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                      <div className="size-3 rounded-full bg-blue-500" />
+                      <div className="size-3 rounded-full bg-green-500" />
                       <span>
                         Nuevos: {customerBreakdown.new}
                       </span>

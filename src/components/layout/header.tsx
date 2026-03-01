@@ -10,7 +10,7 @@ const isClerkConfigured =
   !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.includes("REPLACE_ME");
 
 const planColors: Record<string, string> = {
-  esencial: "bg-blue-100 text-blue-700",
+  esencial: "bg-primary/10 text-primary",
   profesional: "bg-purple-100 text-purple-700",
   premium: "bg-amber-100 text-amber-700",
 };
@@ -21,7 +21,7 @@ export function DashboardHeader() {
   });
 
   return (
-    <header className="flex h-16 items-center justify-between border-b px-4 md:px-6">
+    <header className="flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-md md:px-6">
       <div className="flex items-center gap-3">
         <MobileSidebar />
         {data && (
