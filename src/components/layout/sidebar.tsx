@@ -18,7 +18,7 @@ export function Sidebar() {
     <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex h-16 items-center border-b border-sidebar-border px-6">
         <Link href="/dashboard" className="flex items-center gap-2 text-xl font-bold text-white">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-xs font-black text-primary-foreground">
+          <span className="flex size-7 items-center justify-center rounded-lg bg-green-500 text-xs font-black text-white shadow-md shadow-green-500/30">
             Ya
           </span>
           Comanda
@@ -33,14 +33,14 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-sidebar-accent text-white"
-                  : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  ? "bg-white/10 text-white"
+                  : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
               )}
             >
               {isActive && (
-                <span className="absolute left-0 h-6 w-0.5 rounded-r-full bg-primary" />
+                <span className="absolute -left-4 h-5 w-1 rounded-r-full bg-green-500" />
               )}
               <item.icon className="size-4 shrink-0" />
               {item.label}

@@ -37,10 +37,10 @@ export function MobileSidebar() {
       </Button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="w-64 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground">
-          <SheetHeader className="border-b border-sidebar-border px-6 py-4">
+        <SheetContent side="left" className="w-64 border-slate-800 bg-[#0c1222] p-0 text-slate-300">
+          <SheetHeader className="border-b border-slate-800 px-6 py-4">
             <SheetTitle className="flex items-center gap-2 text-xl font-bold text-white">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-xs font-black text-primary-foreground">
+              <span className="flex size-7 items-center justify-center rounded-lg bg-green-500 text-xs font-black text-white">
                 Ya
               </span>
               Comanda
@@ -57,10 +57,10 @@ export function MobileSidebar() {
                   href={item.href}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-sidebar-accent text-white"
-                      : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                      ? "bg-white/10 text-white"
+                      : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
                   )}
                 >
                   <item.icon className="size-4 shrink-0" />
