@@ -104,6 +104,25 @@ export const customersRouter = createTRPCRouter({
       };
     }),
 
+  exportAll: businessProcedure.query(async ({ ctx }) => {
+    const allCustomers = await db
+      .select({
+        name: customers.name,
+        phone: customers.phone,
+        waProfileName: customers.waProfileName,
+        notes: customers.notes,
+        totalOrders: customers.totalOrders,
+        totalSpent: customers.totalSpent,
+        lastOrderAt: customers.lastOrderAt,
+        createdAt: customers.createdAt,
+      })
+      .from(customers)
+      .where(eq(customers.businessId, ctx.businessId))
+      .orderBy(desc(customers.createdAt));
+
+    return allCustomers;
+  }),
+
   updateNotes: businessProcedure
     .input(
       z.object({

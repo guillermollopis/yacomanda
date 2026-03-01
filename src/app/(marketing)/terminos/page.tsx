@@ -30,8 +30,7 @@ export default function TerminosPage() {
             <strong>CIF:</strong> B75512434
           </li>
           <li>
-            <strong>Domicilio social:</strong> Avenida de Aragon 29, puerta 5,
-            46010 Valencia, Espana
+            <strong>Domicilio social:</strong> Valencia, Espana
           </li>
           <li>
             <strong>Email:</strong>{" "}
@@ -231,8 +230,7 @@ export default function TerminosPage() {
             </a>
           </li>
           <li>
-            <strong>Direccion:</strong> Avenida de Aragon 29, puerta 5, 46010
-            Valencia, Espana
+            <strong>Ubicacion:</strong> Valencia, Espana
           </li>
         </ul>
       </div>

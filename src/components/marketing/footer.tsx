@@ -97,14 +97,8 @@ export function MarketingFooter() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-slate-800 pt-8">
-          <div className="flex flex-col items-center gap-3 text-center text-sm text-slate-600">
-            <p className="font-medium text-slate-400">
-              PROTFORGE SL — CIF B75512434
-            </p>
-            <p>Avenida de Aragon 29, puerta 5, 46010 Valencia, Espana</p>
-            <p>&copy; 2026 PROTFORGE SL. Todos los derechos reservados.</p>
-          </div>
+        <div className="mt-12 border-t border-slate-800 pt-8 text-center text-sm text-slate-600">
+          <p>&copy; 2026 PROTFORGE SL. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

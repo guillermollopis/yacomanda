@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useOrderNotifications } from "@/hooks/use-order-notifications";
 import {
   Table,
   TableHeader,
@@ -43,6 +44,7 @@ import {
 
 const STATUS_FILTERS = [
   { value: "all", label: "Todos" },
+  { value: "pending_confirmation", label: "Esperando cliente" },
   { value: "pending", label: "Pendientes" },
   { value: "confirmed", label: "Confirmados" },
   { value: "preparing", label: "Preparando" },
@@ -55,6 +57,7 @@ const NEXT_ACTION: Record<
   string,
   { status: string; label: string; icon: React.ComponentType<{ className?: string }> } | null
 > = {
+  pending_confirmation: { status: "pending", label: "Forzar", icon: Check },
   pending: { status: "confirmed", label: "Confirmar", icon: Check },
   confirmed: { status: "preparing", label: "Preparar", icon: ChefHat },
   paid: { status: "preparing", label: "Preparar", icon: ChefHat },
@@ -76,6 +79,18 @@ export default function OrdersPage() {
     },
     { refetchInterval: 10_000 }
   );
+
+  const { notify } = useOrderNotifications();
+  const prevTotalRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (data == null) return;
+    const current = data.total;
+    if (prevTotalRef.current !== null && current > prevTotalRef.current && statusFilter === "all") {
+      notify("Nuevo pedido", "Se ha recibido un nuevo pedido");
+    }
+    prevTotalRef.current = current;
+  }, [data?.total, notify, statusFilter]);
 
   const utils = trpc.useUtils();
   const updateStatus = trpc.orders.updateStatus.useMutation({

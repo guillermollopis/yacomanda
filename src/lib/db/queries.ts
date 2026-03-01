@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   businesses,
@@ -6,6 +6,8 @@ import {
   conversations,
   messages,
   catalogItems,
+  orders,
+  orderSequences,
 } from "@/lib/db/schema";
 
 // --- Business ---
@@ -161,4 +163,108 @@ export async function getCatalogItems(
     .from(catalogItems)
     .where(eq(catalogItems.businessId, businessId))
     .orderBy(catalogItems.sortOrder);
+}
+
+// --- Order Sequences ---
+
+export async function getNextOrderNumber(businessId: string): Promise<number> {
+  const [row] = await db
+    .insert(orderSequences)
+    .values({ businessId, lastNumber: 1 })
+    .onConflictDoUpdate({
+      target: orderSequences.businessId,
+      set: { lastNumber: sql`${orderSequences.lastNumber} + 1` },
+    })
+    .returning({ lastNumber: orderSequences.lastNumber });
+  return row.lastNumber!;
+}
+
+// --- Orders ---
+
+export async function createOrder(data: {
+  businessId: string;
+  customerId: string;
+  orderNumber: number;
+  items: unknown;
+  subtotal: string;
+  tax: string;
+  total: string;
+  status?: string;
+  deliveryType?: string;
+  deliveryAddress?: string;
+  notes?: string;
+  conversationId?: string;
+}) {
+  const [order] = await db.insert(orders).values(data).returning();
+  return order;
+}
+
+export async function updateOrderStatusById(orderId: string, status: string) {
+  const [updated] = await db
+    .update(orders)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(orders.id, orderId))
+    .returning();
+  return updated;
+}
+
+export async function getOrderById(orderId: string) {
+  const rows = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.id, orderId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function incrementCustomerStats(
+  customerId: string,
+  orderTotal: string
+) {
+  await db
+    .update(customers)
+    .set({
+      totalOrders: sql`${customers.totalOrders} + 1`,
+      totalSpent: sql`${customers.totalSpent}::numeric + ${orderTotal}::numeric`,
+      lastOrderAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(customers.id, customerId));
+}
+
+export async function incrementBusinessOrderCount(businessId: string) {
+  await db
+    .update(businesses)
+    .set({
+      monthlyOrderCount: sql`${businesses.monthlyOrderCount} + 1`,
+      updatedAt: new Date(),
+    })
+    .where(eq(businesses.id, businessId));
+}
+
+export async function getCustomerLastOrder(customerId: string) {
+  const rows = await db
+    .select({
+      id: orders.id,
+      items: orders.items,
+      total: orders.total,
+      deliveryType: orders.deliveryType,
+      createdAt: orders.createdAt,
+    })
+    .from(orders)
+    .where(eq(orders.customerId, customerId))
+    .orderBy(desc(orders.createdAt))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+// --- Business lookup by ID ---
+
+export async function getBusinessById(businessId: string) {
+  const rows = await db
+    .select()
+    .from(businesses)
+    .where(eq(businesses.id, businessId))
+    .limit(1);
+  return rows[0] ?? null;
 }

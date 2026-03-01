@@ -3,6 +3,11 @@
 import { Badge } from "@/components/ui/badge";
 
 const STATUS_CONFIG: Record<string, { label: string; className: string; dot: string }> = {
+  pending_confirmation: {
+    label: "Esperando cliente",
+    className: "bg-amber-100 text-amber-800 border-amber-200",
+    dot: "bg-amber-500 animate-pulse",
+  },
   pending: {
     label: "Pendiente",
     className: "bg-yellow-100 text-yellow-800 border-yellow-200",

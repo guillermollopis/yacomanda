@@ -1,4 +1,4 @@
-import { sendTextMessage } from "./client";
+import { sendTextMessage, sendInteractiveMessage } from "./client";
 import type { WaApiOptions } from "./client";
 
 interface BusinessContext {
@@ -51,5 +51,54 @@ export async function sendEscalationNotice(
   to: string
 ) {
   const text = `Un miembro del equipo de ${business.name} te atenderá personalmente en breve. ¡Gracias por tu paciencia!`;
+  return sendTextMessage(toOpts(business), to, text);
+}
+
+export async function sendOrderSummaryWithButtons(
+  business: BusinessContext,
+  to: string,
+  orderId: string,
+  summaryText: string
+) {
+  return sendInteractiveMessage(toOpts(business), to, {
+    type: "button",
+    body: { text: summaryText },
+    action: {
+      buttons: [
+        {
+          type: "reply",
+          reply: { id: `confirm_order:${orderId}`, title: "Confirmar" },
+        },
+        {
+          type: "reply",
+          reply: { id: `cancel_order:${orderId}`, title: "Cancelar" },
+        },
+      ],
+    },
+  });
+}
+
+const STATUS_MESSAGES: Record<string, (orderNumber: number, businessName: string) => string> = {
+  confirmed: (n, biz) =>
+    `✅ *Pedido #${n} confirmado*\n\n${biz} ha confirmado tu pedido. Te avisaremos cuando esté listo.`,
+  preparing: (n) =>
+    `👨‍🍳 *Pedido #${n} en preparación*\n\nTu pedido se está preparando ahora mismo.`,
+  ready: (n) =>
+    `🔔 *Pedido #${n} listo*\n\n¡Tu pedido está listo para recoger!`,
+  completed: (n) =>
+    `✅ *Pedido #${n} completado*\n\n¡Gracias por tu pedido! Esperamos verte pronto.`,
+  cancelled: (n) =>
+    `❌ *Pedido #${n} cancelado*\n\nTu pedido ha sido cancelado. Si tienes dudas, escríbenos.`,
+};
+
+export async function sendStatusNotification(
+  business: BusinessContext,
+  to: string,
+  orderNumber: number,
+  status: string
+) {
+  const builder = STATUS_MESSAGES[status];
+  if (!builder) return null;
+  const text = builder(orderNumber, business.name);
   return sendTextMessage(toOpts(business), to, text);
 }

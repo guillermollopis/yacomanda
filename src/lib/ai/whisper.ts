@@ -23,7 +23,7 @@ export async function transcribeAudio(
   const transcription = await client.audio.transcriptions.create({
     model: "whisper-1",
     file,
-    language: "es",
+    // No language param — Whisper auto-detects (supports Spanish, English, etc.)
   });
 
   return transcription.text || null;

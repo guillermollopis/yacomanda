@@ -6,14 +6,228 @@ import {
   getConversationHistory,
   getCatalogItems,
   updateMessageStatus,
+  getNextOrderNumber,
+  createOrder,
+  updateOrderStatusById,
+  incrementCustomerStats,
+  incrementBusinessOrderCount,
+  getCustomerLastOrder,
 } from "@/lib/db/queries";
 import { sendTextMessage, markAsRead, downloadMedia } from "./client";
+import {
+  sendOrderSummaryWithButtons,
+  sendEscalationNotice,
+  sendOrderConfirmation,
+} from "./message-sender";
 import { buildSystemPrompt } from "@/lib/ai/prompt-builder";
 import { parseOrder } from "@/lib/ai/order-parser";
+import type { ParsedAiResponse } from "@/lib/ai/order-parser";
 import { transcribeAudio } from "@/lib/ai/whisper";
 import { uploadMedia } from "@/lib/storage/r2";
+import {
+  matchAndPriceItems,
+  calculateOrderTotals,
+  buildOrderSummaryText,
+} from "./order-builder";
+import { isBusinessOpen } from "./schedule-checker";
 import type { ParsedMessage, ParsedStatus } from "./webhook-handler";
 import type { WaApiOptions } from "./client";
+
+// --- Button reply handler ---
+
+async function handleButtonReply(
+  msg: ParsedMessage,
+  business: { id: string; waPhoneId: string; waAccessToken: string; name: string },
+  customer: { id: string },
+  conversation: { id: string },
+  waOpts: WaApiOptions
+) {
+  const buttonId = msg.buttonReplyId!;
+  const [action, orderId] = buttonId.split(":");
+  if (!orderId) return;
+
+  if (action === "confirm_order") {
+    const updated = await updateOrderStatusById(orderId, "pending");
+    if (!updated) return;
+
+    // Increment customer + business stats
+    await Promise.all([
+      incrementCustomerStats(customer.id, updated.total),
+      incrementBusinessOrderCount(business.id),
+    ]);
+
+    // Send confirmation
+    const items = (updated.items as Array<{ name: string; quantity: number; unitPrice: string }>) ?? [];
+    await sendOrderConfirmation(
+      { name: business.name, waPhoneId: business.waPhoneId, waAccessToken: business.waAccessToken },
+      msg.from,
+      {
+        orderNumber: updated.orderNumber,
+        items: items.map((i) => ({
+          name: i.name,
+          quantity: i.quantity,
+          price: i.unitPrice,
+        })),
+        total: updated.total,
+      }
+    );
+
+    // Save outbound message record
+    await saveMessage({
+      conversationId: conversation.id,
+      businessId: business.id,
+      direction: "outbound",
+      messageType: "text",
+      content: `Pedido #${updated.orderNumber} confirmado por el cliente.`,
+    });
+  } else if (action === "cancel_order") {
+    await updateOrderStatusById(orderId, "cancelled");
+
+    const text = "Pedido cancelado. Si necesitas algo más, ¡dinos!";
+    await sendTextMessage(waOpts, msg.from, text);
+
+    await saveMessage({
+      conversationId: conversation.id,
+      businessId: business.id,
+      direction: "outbound",
+      messageType: "text",
+      content: text,
+    });
+  }
+}
+
+// --- Order intent handler ---
+
+async function handleOrderIntent(
+  aiResult: ParsedAiResponse,
+  business: {
+    id: string;
+    name: string;
+    waPhoneId: string;
+    waAccessToken: string;
+    monthlyOrderCount: number | null;
+    monthlyOrderLimit: number | null;
+    deliveryEnabled: boolean | null;
+  },
+  customer: { id: string },
+  conversation: { id: string },
+  phone: string,
+  waOpts: WaApiOptions,
+  deliveryType?: string,
+  deliveryAddress?: string
+) {
+  if (!aiResult.items || aiResult.items.length === 0) {
+    // AI said "order" but extracted no items — send AI message as-is
+    await sendTextMessage(waOpts, phone, aiResult.message);
+    return aiResult.message;
+  }
+
+  // Match items to catalog
+  const catalog = await getCatalogItems(business.id);
+  const { matched, unmatched } = matchAndPriceItems(aiResult.items, catalog);
+
+  if (unmatched.length > 0) {
+    const text = `No he encontrado estos productos en el menú: ${unmatched.join(", ")}. ¿Podrías corregir el nombre o elegir otra cosa?`;
+    await sendTextMessage(waOpts, phone, text);
+    return text;
+  }
+
+  if (matched.length === 0) {
+    const text = "No he podido identificar ningún producto. ¿Podrías repetir tu pedido?";
+    await sendTextMessage(waOpts, phone, text);
+    return text;
+  }
+
+  // Check monthly order limit
+  const currentCount = business.monthlyOrderCount ?? 0;
+  const limit = business.monthlyOrderLimit ?? Infinity;
+  if (currentCount >= limit) {
+    const text = "Lo sentimos, este negocio ha alcanzado su límite de pedidos mensuales. Por favor, contacta directamente con el establecimiento.";
+    await sendTextMessage(waOpts, phone, text);
+    return text;
+  }
+
+  // Handle delivery — if delivery requested but no address, ask for it
+  const resolvedDeliveryType = deliveryType ?? "pickup";
+  if (resolvedDeliveryType === "delivery" && business.deliveryEnabled && !deliveryAddress) {
+    const text = "Para envío a domicilio, necesito tu dirección de entrega. ¿Cuál es?";
+    await sendTextMessage(waOpts, phone, text);
+    return text;
+  }
+
+  // Create order
+  const totals = calculateOrderTotals(matched);
+  const orderNumber = await getNextOrderNumber(business.id);
+  const order = await createOrder({
+    businessId: business.id,
+    customerId: customer.id,
+    orderNumber,
+    items: matched,
+    subtotal: totals.subtotal,
+    tax: totals.tax,
+    total: totals.total,
+    status: "pending_confirmation",
+    deliveryType: resolvedDeliveryType,
+    deliveryAddress: deliveryAddress ?? undefined,
+    conversationId: conversation.id,
+  });
+
+  // Send interactive summary with buttons
+  const summaryText = buildOrderSummaryText(matched, totals);
+  await sendOrderSummaryWithButtons(
+    { name: business.name, waPhoneId: business.waPhoneId, waAccessToken: business.waAccessToken },
+    phone,
+    order.id,
+    summaryText
+  );
+
+  // Save outbound message
+  await saveMessage({
+    conversationId: conversation.id,
+    businessId: business.id,
+    direction: "outbound",
+    messageType: "interactive",
+    content: summaryText,
+  });
+
+  return summaryText;
+}
+
+// --- Escalation handler ---
+
+async function handleEscalation(
+  business: { id: string; name: string; waPhoneId: string; waAccessToken: string },
+  customer: { id: string },
+  conversation: { id: string; status: string | null },
+  phone: string,
+  waOpts: WaApiOptions
+) {
+  // Update conversation to escalated (only if not already)
+  if (conversation.status !== "escalated") {
+    const { db } = await import("@/lib/db");
+    const { conversations } = await import("@/lib/db/schema");
+    const { eq } = await import("drizzle-orm");
+    await db
+      .update(conversations)
+      .set({ status: "escalated", escalatedReason: "customer_request" })
+      .where(eq(conversations.id, conversation.id));
+  }
+
+  await sendEscalationNotice(
+    { name: business.name, waPhoneId: business.waPhoneId, waAccessToken: business.waAccessToken },
+    phone
+  );
+
+  await saveMessage({
+    conversationId: conversation.id,
+    businessId: business.id,
+    direction: "outbound",
+    messageType: "text",
+    content: `Un miembro del equipo de ${business.name} te atenderá personalmente en breve. ¡Gracias por tu paciencia!`,
+  });
+}
+
+// --- Main inbound message processor ---
 
 export async function processInboundMessage(msg: ParsedMessage) {
   // 1. Find business by phone number ID
@@ -29,8 +243,15 @@ export async function processInboundMessage(msg: ParsedMessage) {
     return;
   }
 
+  // Narrowed business with guaranteed non-null WA credentials
+  const biz = {
+    ...business,
+    waPhoneId: business.waPhoneId,
+    waAccessToken: accessToken,
+  };
+
   const waOpts: WaApiOptions = {
-    phoneNumberId: business.waPhoneId,
+    phoneNumberId: biz.waPhoneId,
     accessToken,
   };
 
@@ -47,7 +268,27 @@ export async function processInboundMessage(msg: ParsedMessage) {
     customer.id
   );
 
-  // 4. Determine content + handle media
+  // 4. Handle button replies (before anything else)
+  if (msg.buttonReplyId) {
+    // Save inbound button reply
+    await saveMessage({
+      conversationId: conversation.id,
+      businessId: business.id,
+      direction: "inbound",
+      waMessageId: msg.messageId,
+      messageType: "interactive",
+      content: msg.buttonReplyTitle ?? msg.buttonReplyId,
+    });
+
+    markAsRead(waOpts, msg.messageId).catch((err) =>
+      console.error("Failed to mark as read:", err)
+    );
+
+    await handleButtonReply(msg, biz, customer, conversation, waOpts);
+    return;
+  }
+
+  // 5. Determine content + handle media
   let content = msg.text ?? msg.caption;
   let mediaUrl: string | undefined;
   let mediaMimeType: string | undefined;
@@ -67,7 +308,6 @@ export async function processInboundMessage(msg: ParsedMessage) {
       );
       mediaUrl = key;
 
-      // 5. Handle audio transcription
       if (msg.type === "audio") {
         const transcription = await transcribeAudio(buffer, mimeType);
         if (transcription) {
@@ -101,10 +341,36 @@ export async function processInboundMessage(msg: ParsedMessage) {
   // 8. Check if bot is active
   if (!business.botActive) return;
 
-  // 9. Check if conversation is escalated
-  if (conversation.status === "escalated") return;
+  // 9. Check if conversation is escalated — message is already saved, just don't auto-reply
+  if (conversation.status === "escalated") {
+    // Message was already saved in step 6 — staff will see it in the conversations inbox
+    return;
+  }
 
-  // 10. Generate response
+  // 10. Check business hours
+  const schedule = (business.kitchenSchedule ?? {}) as Record<string, unknown>;
+  if (Object.keys(schedule).length > 0) {
+    const { open, nextOpenTime } = isBusinessOpen(
+      schedule as Record<string, { open: string; close: string }>,
+      business.timezone ?? "Europe/Madrid"
+    );
+    if (!open) {
+      const text = nextOpenTime
+        ? `Lo sentimos, estamos cerrados ahora. Abrimos a las ${nextOpenTime}. ¡Te esperamos!`
+        : "Lo sentimos, estamos cerrados ahora. ¡Vuelve pronto!";
+      await sendTextMessage(waOpts, msg.from, text);
+      await saveMessage({
+        conversationId: conversation.id,
+        businessId: business.id,
+        direction: "outbound",
+        messageType: "text",
+        content: text,
+      });
+      return;
+    }
+  }
+
+  // 11. Generate AI response
   const hasAiKey = !!(
     process.env.GROQ_API_KEY ||
     process.env.ANTHROPIC_API_KEY ||
@@ -118,13 +384,38 @@ export async function processInboundMessage(msg: ParsedMessage) {
   if (hasAiKey && content) {
     // Full AI flow
     const history = await getConversationHistory(conversation.id, 10);
-    const catalog = await getCatalogItems(business.id);
-    const systemPrompt = buildSystemPrompt(business, catalog);
+    const catalog = await getCatalogItems(biz.id);
+
+    // Fetch last order for repeat ordering
+    const lastOrder = await getCustomerLastOrder(customer.id);
+    const systemPrompt = buildSystemPrompt(biz, catalog, lastOrder ?? undefined);
 
     const result = await parseOrder(systemPrompt, content, history);
-    responseText = result.message;
     aiParsed = result;
     aiConfidence = result.confidence?.toString();
+
+    // Handle different AI response types
+    if (result.type === "order") {
+      const deliveryType = result.deliveryType;
+      const deliveryAddr = result.deliveryAddress;
+      responseText = await handleOrderIntent(
+        result,
+        biz,
+        customer,
+        conversation,
+        msg.from,
+        waOpts,
+        deliveryType,
+        deliveryAddr
+      ) ?? result.message;
+      // Don't save again — handleOrderIntent already saved outbound
+      return;
+    } else if (result.type === "escalate") {
+      await handleEscalation(biz, customer, conversation, msg.from, waOpts);
+      return;
+    } else {
+      responseText = result.message;
+    }
   } else {
     // No AI key — send acknowledgment
     responseText =
@@ -132,7 +423,7 @@ export async function processInboundMessage(msg: ParsedMessage) {
       `¡Hola! Hemos recibido tu mensaje. Un miembro de nuestro equipo de ${business.name} te atenderá pronto.`;
   }
 
-  // 11. Send response via WhatsApp
+  // 12. Send response via WhatsApp
   let outboundWaId: string | undefined;
   try {
     const sendResult = (await sendTextMessage(
@@ -145,7 +436,7 @@ export async function processInboundMessage(msg: ParsedMessage) {
     console.error("Failed to send WhatsApp response:", err);
   }
 
-  // 12. Save outbound message
+  // 13. Save outbound message
   await saveMessage({
     conversationId: conversation.id,
     businessId: business.id,

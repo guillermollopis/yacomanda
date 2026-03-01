@@ -56,6 +56,7 @@ export const settingsRouter = createTRPCRouter({
       minPreparationMinutes: biz.minPreparationMinutes,
       deliveryEnabled: biz.deliveryEnabled,
       pickupEnabled: biz.pickupEnabled,
+      kitchenSchedule: biz.kitchenSchedule,
     };
   }),
 
@@ -74,6 +75,12 @@ export const settingsRouter = createTRPCRouter({
         minPreparationMinutes: z.number().min(0).max(240).optional(),
         deliveryEnabled: z.boolean().optional(),
         pickupEnabled: z.boolean().optional(),
+        kitchenSchedule: z
+          .record(
+            z.string(),
+            z.object({ open: z.string(), close: z.string() })
+          )
+          .optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

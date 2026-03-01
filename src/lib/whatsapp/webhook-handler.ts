@@ -15,6 +15,16 @@ const waMediaInfoSchema = z.object({
   caption: z.string().optional(),
 });
 
+const waButtonReplySchema = z.object({
+  id: z.string(),
+  title: z.string(),
+});
+
+const waInteractiveSchema = z.object({
+  type: z.string(),
+  button_reply: waButtonReplySchema.optional(),
+});
+
 const waMessageSchema = z.object({
   from: z.string(),
   id: z.string(),
@@ -25,6 +35,7 @@ const waMessageSchema = z.object({
   audio: waMediaInfoSchema.optional(),
   video: waMediaInfoSchema.optional(),
   document: waMediaInfoSchema.optional(),
+  interactive: waInteractiveSchema.optional(),
 });
 
 const waContactSchema = z.object({
@@ -80,6 +91,8 @@ export interface ParsedMessage {
   mediaId?: string;
   mediaMimeType?: string;
   caption?: string;
+  buttonReplyId?: string;
+  buttonReplyTitle?: string;
 }
 
 export interface ParsedStatus {
@@ -118,7 +131,7 @@ export function verifyWebhookSignature(
 export async function isMessageDuplicate(
   waMessageId: string
 ): Promise<boolean> {
-  return isDuplicate(`wa_dedup:${waMessageId}`, 3600);
+  return isDuplicate(`wa_dedup:${waMessageId}`, 86400); // 24 hours — WhatsApp retries up to 23h
 }
 
 // --- Payload parsing ---
@@ -165,10 +178,12 @@ export function parseWebhookPayload(
             messageId: msg.id,
             timestamp: msg.timestamp,
             type: msg.type,
-            text: msg.text?.body,
+            text: msg.text?.body ?? msg.interactive?.button_reply?.title,
             mediaId: mediaInfo?.id,
             mediaMimeType: mediaInfo?.mime_type,
             caption: mediaInfo?.caption,
+            buttonReplyId: msg.interactive?.button_reply?.id,
+            buttonReplyTitle: msg.interactive?.button_reply?.title,
           });
         }
       }

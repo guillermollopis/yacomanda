@@ -13,7 +13,6 @@ import {
   Smartphone,
   Sparkles,
   ArrowRight,
-  Star,
   TrendingUp,
   Shield,
   Zap,
@@ -151,9 +150,9 @@ export default function LandingPage() {
       <section className="relative border-b border-slate-200 bg-white px-4 py-14">
         <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 md:grid-cols-4">
           {[
-            { value: "500+", label: "Restaurantes activos", icon: Users },
-            { value: "50K+", label: "Pedidos procesados", icon: TrendingUp },
             { value: "0%", label: "Comisiones por pedido", icon: Shield },
+            { value: "24/7", label: "Bot activo sin descanso", icon: Users },
+            { value: "~30%", label: "Ahorro vs plataformas", icon: TrendingUp },
             { value: "<15min", label: "Tiempo de setup", icon: Zap },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
@@ -400,72 +399,51 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================
-          TESTIMONIALS — Social proof with warmth
+          WHY CHOOSE US — Honest trust signals
           ============================================ */}
       <section className="px-4 py-24">
         <AnimateOnScroll className="mx-auto max-w-5xl">
           <div className="text-center">
             <span className="mb-3 inline-block rounded-full bg-amber-50 px-4 py-1 text-sm font-semibold text-amber-600">
-              Testimonios
+              Garantias
             </span>
             <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-              Lo que dicen nuestros restaurantes
+              Sin riesgo, sin compromiso
             </h2>
           </div>
 
           <div className="mt-14 grid gap-6 md:grid-cols-3">
             {[
               {
-                name: "Carlos M.",
-                role: "Pizzeria Roma, Barcelona",
-                text: "Desde que usamos YaComanda hemos duplicado los pedidos por WhatsApp. Los clientes pagan al instante y nosotros solo cocinamos. Increible.",
-                stars: 5,
-                avatar: "bg-green-500",
-                emoji: "🍕",
+                title: "Prueba gratis 14 dias",
+                text: "Configura tu restaurante, prueba el bot con tus clientes y decide si te convence. Sin tarjeta de credito, sin letra pequeña.",
+                icon: "🎯",
+                color: "bg-green-50 border-green-200",
               },
               {
-                name: "Laura S.",
-                role: "Sushi Zen, Madrid",
-                text: "Dejamos Glovo y ahorramos mas de 1.000€ al mes en comisiones. El bot entiende perfectamente los pedidos, incluso los complicados.",
-                stars: 5,
-                avatar: "bg-amber-500",
-                emoji: "🍣",
+                title: "Cancela cuando quieras",
+                text: "Sin permanencia ni penalizaciones. Si no te funciona, cancelas desde el panel en un clic. Tus datos siguen siendo tuyos.",
+                icon: "🔓",
+                color: "bg-blue-50 border-blue-200",
               },
               {
-                name: "Miguel A.",
-                role: "Burger Lab, Valencia",
-                text: "Configuramos todo en 10 minutos con la foto de nuestra carta. La IA la leyo perfecta. Es magia. Nuestro equipo no puede estar mas contento.",
-                stars: 5,
-                avatar: "bg-blue-500",
-                emoji: "🍔",
+                title: "Tus datos, tu control",
+                text: "Cumplimos con el RGPD y la LSSI-CE. Datos alojados en la UE. Puedes exportar tu lista de clientes y pedidos en cualquier momento.",
+                icon: "🛡️",
+                color: "bg-amber-50 border-amber-200",
               },
-            ].map((t) => (
+            ].map((item) => (
               <div
-                key={t.name}
-                className="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                key={item.title}
+                className={`card-hover rounded-2xl border ${item.color} p-6 shadow-sm`}
               >
-                <div className="mb-4 flex gap-0.5">
-                  {Array.from({ length: t.stars }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className="size-4 fill-amber-400 text-amber-400"
-                    />
-                  ))}
-                </div>
-                <p className="text-sm leading-relaxed text-slate-600">
-                  &ldquo;{t.text}&rdquo;
+                <div className="mb-4 text-3xl">{item.icon}</div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                  {item.text}
                 </p>
-                <div className="mt-6 flex items-center gap-3 border-t border-slate-100 pt-4">
-                  <div className={`flex size-10 items-center justify-center rounded-full ${t.avatar} text-lg`}>
-                    {t.emoji}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {t.name}
-                    </p>
-                    <p className="text-xs text-slate-500">{t.role}</p>
-                  </div>
-                </div>
               </div>
             ))}
           </div>
@@ -571,12 +549,18 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Kit Digital */}
-          <div className="mt-10 rounded-2xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-6 text-center">
-            <p className="text-sm font-medium text-slate-700">
-              🏛️ Financiable con{" "}
-              <strong>Kit Digital</strong> — Subvencion de hasta el 100% para
-              pymes y autonomos
+          {/* Pricing notes */}
+          <div className="mt-10 space-y-4">
+            <div className="rounded-2xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-6 text-center">
+              <p className="text-sm font-medium text-slate-700">
+                🏛️ Financiable con{" "}
+                <strong>Kit Digital</strong> — Subvencion de hasta el 100% para
+                pymes y autonomos
+              </p>
+            </div>
+            <p className="text-center text-xs text-slate-400">
+              Precios sin IVA. Los cobros online a tus clientes tienen una comision de procesamiento de Stripe del 1,5% + 0,25€ por transaccion (tarifa estandar en Europa).
+              Si tus clientes pagan en efectivo, no hay ningun coste adicional.
             </p>
           </div>
 

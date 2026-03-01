@@ -16,6 +16,8 @@ const parsedResponseSchema = z.object({
   message: z.string(),
   items: z.array(parsedItemSchema).optional(),
   confidence: z.number().min(0).max(1).optional(),
+  deliveryType: z.enum(["pickup", "delivery"]).optional(),
+  deliveryAddress: z.string().optional(),
 });
 
 export type ParsedAiResponse = z.infer<typeof parsedResponseSchema>;

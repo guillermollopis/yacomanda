@@ -3,9 +3,12 @@ import { eq, and, desc, sql, count } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, businessProcedure } from "../init";
 import { db } from "@/lib/db";
-import { orders, customers } from "@/lib/db/schema";
+import { orders, customers, businesses, messages } from "@/lib/db/schema";
+import { sendStatusNotification } from "@/lib/whatsapp/message-sender";
+import { saveMessage } from "@/lib/db/queries";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
+  pending_confirmation: ["pending", "cancelled"],
   pending: ["confirmed", "cancelled"],
   confirmed: ["preparing", "cancelled"],
   payment_sent: ["paid", "cancelled"],
@@ -140,6 +143,56 @@ export const ordersRouter = createTRPCRouter({
           and(eq(orders.id, input.id), eq(orders.businessId, ctx.businessId))
         )
         .returning();
+
+      // Send WhatsApp notification to customer (fire-and-forget)
+      const NOTIFY_STATUSES = ["confirmed", "preparing", "ready", "completed", "cancelled"];
+      if (NOTIFY_STATUSES.includes(input.status) && updated.customerId) {
+        (async () => {
+          try {
+            const [customer] = await db
+              .select({ phone: customers.phone })
+              .from(customers)
+              .where(eq(customers.id, updated.customerId!));
+            const [biz] = await db
+              .select({
+                name: businesses.name,
+                waPhoneId: businesses.waPhoneId,
+                waAccessToken: businesses.waAccessToken,
+              })
+              .from(businesses)
+              .where(eq(businesses.id, ctx.businessId));
+
+            if (customer?.phone && biz?.waPhoneId && biz?.waAccessToken) {
+              await sendStatusNotification(
+                { name: biz.name, waPhoneId: biz.waPhoneId, waAccessToken: biz.waAccessToken },
+                customer.phone,
+                updated.orderNumber,
+                input.status
+              );
+
+              // Save notification as message if conversation exists
+              if (updated.conversationId) {
+                const STATUS_LABELS: Record<string, string> = {
+                  confirmed: "confirmado",
+                  preparing: "en preparación",
+                  ready: "listo",
+                  completed: "completado",
+                  cancelled: "cancelado",
+                };
+                await saveMessage({
+                  conversationId: updated.conversationId,
+                  businessId: ctx.businessId,
+                  direction: "outbound",
+                  messageType: "text",
+                  content: `Notificación: Pedido #${updated.orderNumber} ${STATUS_LABELS[input.status] ?? input.status}`,
+                });
+              }
+            }
+          } catch (err) {
+            console.error("Failed to send status notification:", err);
+          }
+        })();
+      }
 
       return updated;
     }),

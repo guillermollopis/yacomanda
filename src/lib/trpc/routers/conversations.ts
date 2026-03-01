@@ -106,7 +106,8 @@ export const conversationsRouter = createTRPCRouter({
         })
         .from(messages)
         .where(eq(messages.conversationId, input.id))
-        .orderBy(asc(messages.createdAt));
+        .orderBy(asc(messages.createdAt))
+        .limit(200);
 
       return { ...conv, messages: msgs };
     }),
@@ -115,7 +116,7 @@ export const conversationsRouter = createTRPCRouter({
     .input(
       z.object({
         conversationId: z.string().uuid(),
-        content: z.string().min(1).max(4096),
+        content: z.string().min(1).max(1024),
       })
     )
     .mutation(async ({ ctx, input }) => {

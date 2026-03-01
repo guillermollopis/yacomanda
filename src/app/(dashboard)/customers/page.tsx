@@ -31,7 +31,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Users, X, MessageSquare } from "lucide-react";
+import { Search, Users, X, MessageSquare, Download } from "lucide-react";
+import { toast } from "sonner";
 
 export default function CustomersPage() {
   const [search, setSearch] = useState("");
@@ -66,13 +67,68 @@ export default function CustomersPage() {
 
   const totalPages = data ? Math.ceil(data.total / limit) : 0;
 
+  const exportMutation = trpc.customers.exportAll.useQuery(undefined, {
+    enabled: false, // only fetch on demand
+  });
+
+  async function handleExport() {
+    try {
+      const result = await exportMutation.refetch();
+      const customers = result.data;
+      if (!customers || customers.length === 0) {
+        toast.error("No hay clientes para exportar");
+        return;
+      }
+
+      // Build CSV
+      const headers = ["Nombre", "Teléfono", "Perfil WhatsApp", "Notas", "Total pedidos", "Total gastado", "Último pedido", "Fecha registro"];
+      const rows = customers.map((c) => [
+        c.name ?? "",
+        c.phone,
+        c.waProfileName ?? "",
+        (c.notes ?? "").replace(/"/g, '""'),
+        String(c.totalOrders ?? 0),
+        c.totalSpent ?? "0",
+        c.lastOrderAt ? new Date(c.lastOrderAt).toISOString().split("T")[0] : "",
+        c.createdAt ? new Date(c.createdAt).toISOString().split("T")[0] : "",
+      ]);
+
+      const csv = [
+        headers.join(","),
+        ...rows.map((r) => r.map((v) => `"${v}"`).join(",")),
+      ].join("\n");
+
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `clientes_${new Date().toISOString().split("T")[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Exportación completada");
+    } catch {
+      toast.error("Error al exportar clientes");
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Clientes</h1>
-        <p className="text-sm text-muted-foreground">
-          {data ? `${data.total} cliente(s) registrados` : "\u00A0"}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Clientes</h1>
+          <p className="text-sm text-muted-foreground">
+            {data ? `${data.total} cliente(s) registrados` : "\u00A0"}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExport}
+          disabled={exportMutation.isFetching}
+        >
+          <Download className="mr-2 size-4" />
+          {exportMutation.isFetching ? "Exportando..." : "Exportar CSV"}
+        </Button>
       </div>
 
       {/* Search */}

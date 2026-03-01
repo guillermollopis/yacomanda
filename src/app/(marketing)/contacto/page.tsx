@@ -93,10 +93,9 @@ export default function ContactoPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Domicilio social
+                  Ubicacion
                 </p>
-                <p>Avenida de Aragon 29, puerta 5</p>
-                <p>46010 Valencia, Espana</p>
+                <p>Valencia, Espana</p>
               </div>
             </CardContent>
           </Card>

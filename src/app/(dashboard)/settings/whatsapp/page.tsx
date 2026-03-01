@@ -25,13 +25,36 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { BOT_TONES } from "@/config/constants";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Save, CheckCircle2, Bot, Truck } from "lucide-react";
+import { Save, CheckCircle2, Bot, Truck, Clock } from "lucide-react";
 
 const TONE_LABELS: Record<string, string> = {
   formal: "Formal (usted)",
   informal: "Informal (tú)",
   muy_informal: "Muy informal (coloquial)",
 };
+
+const DAY_KEYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+
+const DAY_LABELS: Record<string, string> = {
+  monday: "Lunes",
+  tuesday: "Martes",
+  wednesday: "Miércoles",
+  thursday: "Jueves",
+  friday: "Viernes",
+  saturday: "Sábado",
+  sunday: "Domingo",
+};
+
+type DaySchedule = { open: string; close: string };
+type WeekSchedule = Record<string, DaySchedule>;
 
 export default function WhatsAppSettingsPage() {
   const { data, isLoading } = trpc.settings.getBusinessSettings.useQuery();
@@ -46,6 +69,9 @@ export default function WhatsAppSettingsPage() {
     pickupEnabled: true,
   });
 
+  const [schedule, setSchedule] = useState<WeekSchedule>({});
+  const [closedDays, setClosedDays] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     if (data) {
       setForm({
@@ -56,6 +82,16 @@ export default function WhatsAppSettingsPage() {
         deliveryEnabled: data.deliveryEnabled ?? false,
         pickupEnabled: data.pickupEnabled ?? true,
       });
+
+      const savedSchedule = (data.kitchenSchedule ?? {}) as WeekSchedule;
+      setSchedule(savedSchedule);
+
+      // Compute closed days
+      const closed: Record<string, boolean> = {};
+      for (const day of DAY_KEYS) {
+        closed[day] = !savedSchedule[day];
+      }
+      setClosedDays(closed);
     }
   }, [data]);
 
@@ -68,6 +104,14 @@ export default function WhatsAppSettingsPage() {
   });
 
   function handleSave() {
+    // Build final schedule excluding closed days
+    const finalSchedule: WeekSchedule = {};
+    for (const day of DAY_KEYS) {
+      if (!closedDays[day] && schedule[day]) {
+        finalSchedule[day] = schedule[day];
+      }
+    }
+
     updateMutation.mutate({
       botActive: form.botActive,
       botTone: form.botTone as (typeof BOT_TONES)[number],
@@ -75,6 +119,7 @@ export default function WhatsAppSettingsPage() {
       minPreparationMinutes: form.minPreparationMinutes,
       deliveryEnabled: form.deliveryEnabled,
       pickupEnabled: form.pickupEnabled,
+      kitchenSchedule: finalSchedule,
     });
   }
 
@@ -211,6 +256,82 @@ export default function WhatsAppSettingsPage() {
               {form.welcomeMessage.length}/500 caracteres
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Business hours */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Clock className="size-5" />
+            <div>
+              <CardTitle>Horario de cocina</CardTitle>
+              <CardDescription>
+                Fuera de este horario, el bot informará que estáis cerrados. Deja
+                todos los días sin horario para aceptar pedidos 24/7.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {DAY_KEYS.map((day) => (
+            <div
+              key={day}
+              className="flex items-center gap-3 rounded-md border p-3"
+            >
+              <div className="w-24 shrink-0">
+                <span className="text-sm font-medium">{DAY_LABELS[day]}</span>
+              </div>
+              <Switch
+                checked={!closedDays[day]}
+                onCheckedChange={(checked) => {
+                  setClosedDays({ ...closedDays, [day]: !checked });
+                  if (checked && !schedule[day]) {
+                    setSchedule({
+                      ...schedule,
+                      [day]: { open: "09:00", close: "22:00" },
+                    });
+                  }
+                }}
+              />
+              {closedDays[day] ? (
+                <span className="text-sm text-muted-foreground">Cerrado</span>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="time"
+                    value={schedule[day]?.open ?? "09:00"}
+                    onChange={(e) =>
+                      setSchedule({
+                        ...schedule,
+                        [day]: {
+                          ...schedule[day],
+                          open: e.target.value,
+                          close: schedule[day]?.close ?? "22:00",
+                        },
+                      })
+                    }
+                    className="w-28"
+                  />
+                  <span className="text-sm text-muted-foreground">a</span>
+                  <Input
+                    type="time"
+                    value={schedule[day]?.close ?? "22:00"}
+                    onChange={(e) =>
+                      setSchedule({
+                        ...schedule,
+                        [day]: {
+                          open: schedule[day]?.open ?? "09:00",
+                          close: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-28"
+                  />
+                </div>
+              )}
+            </div>
+          ))}
         </CardContent>
       </Card>
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ export default function ConversationsPage() {
   const { data: listData, isLoading: listLoading } =
     trpc.conversations.list.useQuery(
       statusFilter === "all" ? undefined : { status: statusFilter },
-      { refetchInterval: 15_000 }
+      { refetchInterval: 5_000 }
     );
 
   return (
@@ -160,7 +161,7 @@ function ChatView({
 
   const { data, isLoading } = trpc.conversations.get.useQuery(
     { id: conversationId },
-    { refetchInterval: 10_000 }
+    { refetchInterval: 5_000 }
   );
 
   const sendMutation = trpc.conversations.sendMessage.useMutation({
@@ -169,20 +170,25 @@ function ChatView({
       utils.conversations.get.invalidate({ id: conversationId });
       utils.conversations.list.invalidate();
     },
+    onError: (err) => toast.error(err.message || "Error al enviar el mensaje"),
   });
 
   const returnToBot = trpc.conversations.returnToBot.useMutation({
     onSuccess: () => {
+      toast.success("Bot reactivado");
       utils.conversations.get.invalidate({ id: conversationId });
       utils.conversations.list.invalidate();
     },
+    onError: (err) => toast.error(err.message || "Error al reactivar el bot"),
   });
 
   const closeMutation = trpc.conversations.close.useMutation({
     onSuccess: () => {
+      toast.success("Conversación cerrada");
       utils.conversations.get.invalidate({ id: conversationId });
       utils.conversations.list.invalidate();
     },
+    onError: (err) => toast.error(err.message || "Error al cerrar la conversación"),
   });
 
   function handleSend() {

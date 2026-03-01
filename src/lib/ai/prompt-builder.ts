@@ -30,9 +30,15 @@ interface CatalogItemForPrompt {
   allergens?: string[] | null;
 }
 
+interface LastOrderForPrompt {
+  items: unknown;
+  total: string | null;
+}
+
 export function buildSystemPrompt(
   business: BusinessForPrompt,
-  catalog: CatalogItemForPrompt[]
+  catalog: CatalogItemForPrompt[],
+  lastOrder?: LastOrderForPrompt
 ): string {
   const typeLabel =
     BUSINESS_TYPE_LABELS[business.type ?? "restaurant"] ?? "negocio";
@@ -63,6 +69,27 @@ export function buildSystemPrompt(
     .filter(Boolean)
     .join(" y ");
 
+  // Delivery instructions
+  const deliveryInstructions = business.deliveryEnabled
+    ? `
+ENTREGA A DOMICILIO:
+- Si el cliente quiere entrega a domicilio, SIEMPRE pregunta la dirección antes de confirmar el pedido.
+- Incluye "deliveryType": "delivery" y "deliveryAddress": "la dirección" en tu respuesta JSON.
+- Si el cliente quiere recoger, usa "deliveryType": "pickup".`
+    : "";
+
+  // Repeat order context
+  const repeatContext = lastOrder
+    ? (() => {
+        const items = lastOrder.items as Array<{ name: string; quantity: number }> | null;
+        if (!items || items.length === 0) return "";
+        const itemList = items.map((i) => `${i.quantity}x ${i.name}`).join(", ");
+        return `
+ÚLTIMO PEDIDO DEL CLIENTE: ${itemList} (Total: ${lastOrder.total ?? "?"}€)
+Si el cliente quiere "lo mismo", "repetir" o "lo de siempre", usa esos items exactos.`;
+      })()
+    : "";
+
   return `Eres el asistente virtual de ${business.name}, un ${typeLabel}${
     business.address ? ` ubicado en ${business.address}` : ""
   }.
@@ -80,20 +107,25 @@ ${catalogLines.length > 0 ? catalogLines.join("\n") : "(No hay productos disponi
 
 MODALIDADES: ${deliveryModes || "recogida"}
 ${business.minPreparationMinutes ? `TIEMPO MÍNIMO DE PREPARACIÓN: ${business.minPreparationMinutes} minutos` : ""}
+${deliveryInstructions}
+${repeatContext}
 
 REGLAS:
-- Responde SIEMPRE en español
+- IDIOMA: Responde en el mismo idioma que use el cliente. Si escribe en español, responde en español. Si escribe en inglés, responde en inglés. Si no estás seguro, usa español por defecto.
 - Si el cliente pide algo que no está en el menú, díselo amablemente y sugiere alternativas
 - Si el cliente quiere hablar con una persona, establece type "escalate"
 - Siempre confirma el pedido completo antes de procesarlo
 - Si no entiendes algo, pide aclaración
+- Los nombres de los items en el JSON de respuesta SIEMPRE deben coincidir con los nombres del menú (en español), independientemente del idioma del cliente
 
 FORMATO DE RESPUESTA — responde ÚNICAMENTE con JSON válido, sin texto adicional:
 {
   "type": "order" | "question" | "greeting" | "chitchat" | "escalate",
   "message": "Tu respuesta al cliente en texto plano",
   "items": [{"name": "Nombre EXACTO del menú", "quantity": 1, "variants": [], "notes": ""}],
-  "confidence": 0.95
+  "confidence": 0.95,
+  "deliveryType": "pickup" | "delivery",
+  "deliveryAddress": "Dirección del cliente (solo si delivery)"
 }
 
 - type "order": cuando el cliente quiere pedir algo del menú (incluye items)
