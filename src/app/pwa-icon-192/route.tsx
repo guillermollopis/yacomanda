@@ -1,9 +1,8 @@
 import { ImageResponse } from "next/og";
 
-export const size = { width: 32, height: 32 };
-export const contentType = "image/png";
+export const runtime = "edge";
 
-export default function Icon() {
+export async function GET() {
   return new ImageResponse(
     (
       <div
@@ -14,15 +13,16 @@ export default function Icon() {
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: "#16a34a",
-          borderRadius: 6,
-          fontSize: 18,
+          borderRadius: 38,
+          fontSize: 96,
           fontWeight: 700,
           color: "#fff",
+          letterSpacing: "-0.02em",
         }}
       >
         YC
       </div>
     ),
-    { ...size }
+    { width: 192, height: 192 }
   );
 }

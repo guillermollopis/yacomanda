@@ -16,6 +16,8 @@ import {
   UserRound,
   AlertTriangle,
   CheckCheck,
+  RefreshCw,
+  MessageSquareOff,
 } from "lucide-react";
 
 type ConversationStatus = "active" | "escalated" | "closed";
@@ -26,7 +28,7 @@ export default function ConversationsPage() {
   >("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const { data: listData, isLoading: listLoading } =
+  const { data: listData, isLoading: listLoading, error: listError, refetch: refetchList } =
     trpc.conversations.list.useQuery(
       statusFilter === "all" ? undefined : { status: statusFilter },
       { refetchInterval: 5_000 }
@@ -61,7 +63,16 @@ export default function ConversationsPage() {
           )}
         >
           <div className="flex-1 overflow-y-auto">
-            {listLoading ? (
+            {listError ? (
+              <div className="flex flex-col items-center gap-2 p-6 text-center">
+                <AlertTriangle className="size-6 text-red-500" />
+                <p className="text-sm font-medium text-red-700">Error al cargar</p>
+                <Button variant="outline" size="sm" onClick={() => refetchList()}>
+                  <RefreshCw className="mr-1 size-3" />
+                  Reintentar
+                </Button>
+              </div>
+            ) : listLoading ? (
               <div className="space-y-0">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="flex items-start gap-3 border-b p-3">
@@ -159,7 +170,7 @@ function ChatView({
   const [message, setMessage] = useState("");
   const utils = trpc.useUtils();
 
-  const { data, isLoading } = trpc.conversations.get.useQuery(
+  const { data, isLoading, error, refetch } = trpc.conversations.get.useQuery(
     { id: conversationId },
     { refetchInterval: 5_000 }
   );
@@ -212,6 +223,19 @@ function ChatView({
           <Skeleton className="h-10 w-56 rounded-2xl" />
           <Skeleton className="ml-auto h-10 w-40 rounded-2xl" />
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3">
+        <AlertTriangle className="size-6 text-red-500" />
+        <p className="text-sm text-red-700">Error al cargar la conversación</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCw className="mr-1 size-3" />
+          Reintentar
+        </Button>
       </div>
     );
   }
@@ -337,7 +361,12 @@ function ChatView({
       </div>
 
       {/* Input */}
-      {data.status !== "closed" && (
+      {data.status === "closed" ? (
+        <div className="border-t p-3 flex items-center justify-center gap-2 text-muted-foreground">
+          <MessageSquareOff className="size-4" />
+          <p className="text-sm">Esta conversación está cerrada.</p>
+        </div>
+      ) : (
         <div className="border-t p-3">
           <form
             onSubmit={(e) => {

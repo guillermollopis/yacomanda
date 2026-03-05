@@ -10,6 +10,13 @@ import {
 } from "@/lib/payments/connect";
 import { createBillingPortalSession } from "@/lib/payments/billing";
 import { BOT_TONES, DELIVERY_TYPES } from "@/config/constants";
+import {
+  exchangeCodeForToken,
+  exchangeForLongLivedToken,
+  subscribeApp,
+  registerPhoneNumber,
+  getPhoneNumber,
+} from "@/lib/whatsapp/embedded-signup";
 
 export const settingsRouter = createTRPCRouter({
   getBusinessHeader: businessProcedure.query(async ({ ctx }) => {
@@ -57,6 +64,7 @@ export const settingsRouter = createTRPCRouter({
       deliveryEnabled: biz.deliveryEnabled,
       pickupEnabled: biz.pickupEnabled,
       kitchenSchedule: biz.kitchenSchedule,
+      notificationPhone: biz.notificationPhone,
     };
   }),
 
@@ -81,6 +89,7 @@ export const settingsRouter = createTRPCRouter({
             z.object({ open: z.string(), close: z.string() })
           )
           .optional(),
+        notificationPhone: z.string().max(20).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -188,4 +197,74 @@ export const settingsRouter = createTRPCRouter({
     const { url } = await createBillingPortalSession(biz.stripeCustomerId);
     return { url };
   }),
+
+  getWhatsAppStatus: businessProcedure.query(async ({ ctx }) => {
+    const [biz] = await db
+      .select({
+        waPhoneId: businesses.waPhoneId,
+        waBusinessId: businesses.waBusinessId,
+        phone: businesses.phone,
+      })
+      .from(businesses)
+      .where(eq(businesses.id, ctx.businessId));
+
+    if (!biz) {
+      throw new TRPCError({ code: "NOT_FOUND" });
+    }
+
+    return {
+      connected: !!biz.waPhoneId,
+      phoneNumber: biz.phone ?? undefined,
+      waBusinessId: biz.waBusinessId ?? undefined,
+    };
+  }),
+
+  connectWhatsApp: businessProcedure
+    .input(
+      z.object({
+        code: z.string().min(1),
+        wabaId: z.string().min(1),
+        phoneNumberId: z.string().min(1),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.role === "staff") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Solo admin u owner pueden conectar WhatsApp",
+        });
+      }
+
+      // 1. Exchange auth code for short-lived token
+      const shortToken = await exchangeCodeForToken(input.code);
+
+      // 2. Exchange for long-lived token (~60 days)
+      const longToken = await exchangeForLongLivedToken(shortToken);
+
+      // 3. Subscribe WABA to our app's webhooks
+      await subscribeApp(input.wabaId, longToken);
+
+      // 4. Register phone number for messaging
+      await registerPhoneNumber(input.phoneNumberId, longToken);
+
+      // 5. Get display phone number
+      const phoneInfo = await getPhoneNumber(input.phoneNumberId, longToken);
+
+      // 6. Update business record
+      await db
+        .update(businesses)
+        .set({
+          waPhoneId: input.phoneNumberId,
+          waAccessToken: longToken,
+          waBusinessId: input.wabaId,
+          botActive: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(businesses.id, ctx.businessId));
+
+      return {
+        success: true,
+        phoneNumber: phoneInfo.displayPhoneNumber,
+      };
+    }),
 });

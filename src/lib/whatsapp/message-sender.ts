@@ -78,6 +78,90 @@ export async function sendOrderSummaryWithButtons(
   });
 }
 
+// --- Owner notification functions ---
+
+interface OrderForOwnerNotification {
+  id: string;
+  orderNumber: number;
+  items: Array<{ name: string; quantity: number; unitPrice: string; lineTotal: string }>;
+  total: string;
+  deliveryType: string | null;
+}
+
+export async function sendOwnerNewOrderNotification(
+  business: BusinessContext,
+  to: string,
+  order: OrderForOwnerNotification
+) {
+  const lines = order.items
+    .map((i) => `${i.quantity}x ${i.name} — ${i.lineTotal}€`)
+    .join("\n");
+  const delivery = order.deliveryType === "delivery" ? "Envío a domicilio" : "Recogida";
+
+  const body = [
+    `🔔 *Nuevo pedido #${order.orderNumber}*`,
+    "",
+    lines,
+    "",
+    `*Total: ${order.total}€*`,
+    `📦 ${delivery}`,
+  ].join("\n");
+
+  return sendInteractiveMessage(toOpts(business), to, {
+    type: "button",
+    body: { text: body },
+    action: {
+      buttons: [
+        {
+          type: "reply",
+          reply: { id: `owner_accept:${order.id}`, title: "✅ Aceptar" },
+        },
+        {
+          type: "reply",
+          reply: { id: `owner_reject:${order.id}`, title: "❌ Rechazar" },
+        },
+      ],
+    },
+  });
+}
+
+const OWNER_ADVANCE_CONFIG: Record<string, { buttonId: string; buttonTitle: string; bodyText: string }> = {
+  confirmed: {
+    buttonId: "owner_preparing",
+    buttonTitle: "👨‍🍳 Preparando",
+    bodyText: "aceptado. ¿Está en preparación?",
+  },
+  preparing: {
+    buttonId: "owner_ready",
+    buttonTitle: "✅ Listo",
+    bodyText: "en preparación. ¿Está listo?",
+  },
+};
+
+export async function sendOwnerAdvanceButton(
+  business: BusinessContext,
+  to: string,
+  orderId: string,
+  orderNumber: number,
+  currentStatus: string
+) {
+  const config = OWNER_ADVANCE_CONFIG[currentStatus];
+  if (!config) return null;
+
+  return sendInteractiveMessage(toOpts(business), to, {
+    type: "button",
+    body: { text: `Pedido #${orderNumber} ${config.bodyText}` },
+    action: {
+      buttons: [
+        {
+          type: "reply",
+          reply: { id: `${config.buttonId}:${orderId}`, title: config.buttonTitle },
+        },
+      ],
+    },
+  });
+}
+
 const STATUS_MESSAGES: Record<string, (orderNumber: number, businessName: string) => string> = {
   confirmed: (n, biz) =>
     `✅ *Pedido #${n} confirmado*\n\n${biz} ha confirmado tu pedido. Te avisaremos cuando esté listo.`,

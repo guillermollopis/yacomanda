@@ -38,6 +38,7 @@ export const businesses = pgTable(
     waBusinessId: text("wa_business_id"),
     waAccessToken: text("wa_access_token"),
     waWebhookVerifyToken: text("wa_webhook_verify_token"),
+    notificationPhone: text("notification_phone"),
 
     // Stripe
     stripeAccountId: text("stripe_account_id"),

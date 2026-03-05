@@ -40,6 +40,9 @@ import {
   PackageCheck,
   CircleCheck,
   XCircle,
+  LayoutGrid,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 
 const STATUS_FILTERS = [
@@ -71,7 +74,7 @@ export default function OrdersPage() {
   const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
   const limit = 20;
 
-  const { data, isLoading } = trpc.orders.list.useQuery(
+  const { data, isLoading, error, refetch } = trpc.orders.list.useQuery(
     {
       status: statusFilter === "all" ? undefined : statusFilter,
       limit,
@@ -112,6 +115,13 @@ export default function OrdersPage() {
             Gestiona los pedidos de tus clientes.
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Link href="/orders/cocina">
+            <Button variant="outline" size="sm">
+              <LayoutGrid className="size-4 mr-1" />
+              Vista cocina
+            </Button>
+          </Link>
         <Select
           value={statusFilter}
           onValueChange={(v) => {
@@ -130,18 +140,36 @@ export default function OrdersPage() {
             ))}
           </SelectContent>
         </Select>
+        </div>
       </div>
 
-      {isLoading ? (
+      {error ? (
+        <div className="rounded-lg border border-red-200 p-8 text-center">
+          <AlertTriangle className="mx-auto size-8 text-red-500" />
+          <p className="mt-3 font-medium text-red-700">Error al cargar los pedidos</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Comprueba tu conexión e inténtalo de nuevo.
+          </p>
+          <Button variant="outline" className="mt-4" onClick={() => refetch()}>
+            <RefreshCw className="mr-2 size-4" />
+            Reintentar
+          </Button>
+        </div>
+      ) : isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-12 rounded-md" />
           ))}
         </div>
       ) : !data?.items.length ? (
-        <p className="py-8 text-center text-muted-foreground">
-          No hay pedidos.
-        </p>
+        <div className="flex flex-col items-center gap-2 py-12">
+          <PackageCheck className="size-10 text-muted-foreground/50" />
+          <p className="text-sm text-muted-foreground">
+            {statusFilter === "all"
+              ? "Aún no hay pedidos. Los pedidos de WhatsApp aparecerán aquí."
+              : "No hay pedidos con este filtro."}
+          </p>
+        </div>
       ) : (
         <>
           <div className="rounded-md border">

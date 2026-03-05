@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { eq, and, desc, sql, count } from "drizzle-orm";
+import { eq, and, desc, sql, count, notInArray, or, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, businessProcedure } from "../init";
 import { db } from "@/lib/db";
@@ -196,6 +196,37 @@ export const ordersRouter = createTRPCRouter({
 
       return updated;
     }),
+
+  liveBoard: businessProcedure.query(async ({ ctx }) => {
+    const terminalStatuses = ["completed", "cancelled"];
+    const items = await db
+      .select({
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        items: orders.items,
+        total: orders.total,
+        status: orders.status,
+        deliveryType: orders.deliveryType,
+        notes: orders.notes,
+        createdAt: orders.createdAt,
+        customerName: customers.name,
+        customerPhone: customers.phone,
+      })
+      .from(orders)
+      .leftJoin(customers, eq(orders.customerId, customers.id))
+      .where(
+        and(
+          eq(orders.businessId, ctx.businessId),
+          or(
+            notInArray(orders.status, terminalStatuses),
+            isNull(orders.status)
+          )
+        )
+      )
+      .orderBy(desc(orders.createdAt));
+
+    return items;
+  }),
 
   stats: businessProcedure.query(async ({ ctx }) => {
     const today = new Date();

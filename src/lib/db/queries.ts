@@ -258,6 +258,29 @@ export async function getCustomerLastOrder(customerId: string) {
   return rows[0] ?? null;
 }
 
+// --- Order with customer phone (for owner notifications) ---
+
+export async function getOrderWithCustomerPhone(orderId: string) {
+  const rows = await db
+    .select({
+      id: orders.id,
+      orderNumber: orders.orderNumber,
+      items: orders.items,
+      subtotal: orders.subtotal,
+      tax: orders.tax,
+      total: orders.total,
+      status: orders.status,
+      deliveryType: orders.deliveryType,
+      businessId: orders.businessId,
+      customerPhone: customers.phone,
+    })
+    .from(orders)
+    .innerJoin(customers, eq(orders.customerId, customers.id))
+    .where(eq(orders.id, orderId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 // --- Business lookup by ID ---
 
 export async function getBusinessById(businessId: string) {

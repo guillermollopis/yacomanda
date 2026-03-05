@@ -194,6 +194,11 @@ export default function DashboardPage() {
                 href: "/settings/whatsapp",
               },
               {
+                done: !!settings?.notificationPhone,
+                text: "Configurar notificaciones al propietario",
+                href: "/settings/whatsapp",
+              },
+              {
                 done: false,
                 text: "Recibir tu primer pedido",
               },

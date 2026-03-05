@@ -25,7 +25,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { BOT_TONES } from "@/config/constants";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Save, CheckCircle2, Bot, Truck, Clock } from "lucide-react";
+import { Save, CheckCircle2, Bot, Truck, Clock, BellRing } from "lucide-react";
+import { EmbeddedSignup } from "@/components/whatsapp/embedded-signup";
 
 const TONE_LABELS: Record<string, string> = {
   formal: "Formal (usted)",
@@ -67,10 +68,12 @@ export default function WhatsAppSettingsPage() {
     minPreparationMinutes: 30,
     deliveryEnabled: false,
     pickupEnabled: true,
+    notificationPhone: "",
   });
 
   const [schedule, setSchedule] = useState<WeekSchedule>({});
   const [closedDays, setClosedDays] = useState<Record<string, boolean>>({});
+  const [showReconnect, setShowReconnect] = useState(false);
 
   useEffect(() => {
     if (data) {
@@ -81,6 +84,7 @@ export default function WhatsAppSettingsPage() {
         minPreparationMinutes: data.minPreparationMinutes ?? 30,
         deliveryEnabled: data.deliveryEnabled ?? false,
         pickupEnabled: data.pickupEnabled ?? true,
+        notificationPhone: data.notificationPhone ?? "",
       });
 
       const savedSchedule = (data.kitchenSchedule ?? {}) as WeekSchedule;
@@ -120,6 +124,7 @@ export default function WhatsAppSettingsPage() {
       deliveryEnabled: form.deliveryEnabled,
       pickupEnabled: form.pickupEnabled,
       kitchenSchedule: finalSchedule,
+      notificationPhone: form.notificationPhone || undefined,
     });
   }
 
@@ -157,39 +162,84 @@ export default function WhatsAppSettingsPage() {
         </CardHeader>
         <CardContent>
           {waConnected ? (
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="size-5 text-green-600" />
-              <span className="text-sm font-medium text-green-700">
-                WhatsApp conectado
-              </span>
-              <Badge variant="secondary" className="ml-2">
-                {data?.phone}
-              </Badge>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="size-5 text-green-600" />
+                <span className="text-sm font-medium text-green-700">
+                  WhatsApp conectado
+                </span>
+                <Badge variant="secondary" className="ml-2">
+                  {data?.phone}
+                </Badge>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowReconnect((v) => !v)}
+              >
+                Reconectar
+              </Button>
+              {showReconnect && (
+                <div className="pt-2">
+                  <EmbeddedSignup
+                    onConnected={() => {
+                      setShowReconnect(false);
+                      utils.settings.getBusinessSettings.invalidate();
+                      toast.success("WhatsApp reconectado");
+                    }}
+                  />
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="size-2 rounded-full bg-yellow-500 animate-pulse" />
-                <span className="text-sm font-medium text-yellow-700">
-                  Configuración pendiente
-                </span>
-              </div>
               <p className="text-sm text-muted-foreground">
-                Nuestro equipo está configurando WhatsApp Business para tu
-                número{data?.phone ? ` (${data.phone})` : ""}. Este proceso
-                suele tardar 24-48h desde que completaste el registro.
+                Conecta tu número de WhatsApp Business para empezar a recibir
+                pedidos.
               </p>
-              <p className="text-sm text-muted-foreground">
-                ¿Necesitas ayuda? Escríbenos a{" "}
-                <a
-                  href="mailto:soporte@yacomanda.com"
-                  className="text-primary underline"
-                >
-                  soporte@yacomanda.com
-                </a>
-              </p>
+              <EmbeddedSignup
+                onConnected={() => {
+                  utils.settings.getBusinessSettings.invalidate();
+                }}
+              />
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Owner notifications */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <BellRing className="size-5" />
+            <div>
+              <CardTitle>Notificaciones al propietario</CardTitle>
+              <CardDescription>
+                Recibe los pedidos nuevos en tu WhatsApp personal con botones
+                para aceptar, preparar y marcar como listo.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="notificationPhone">
+              Número de WhatsApp para notificaciones
+            </Label>
+            <Input
+              id="notificationPhone"
+              value={form.notificationPhone}
+              onChange={(e) =>
+                setForm({ ...form, notificationPhone: e.target.value })
+              }
+              placeholder="+34 600 123 456"
+              className="max-w-xs"
+            />
+            <p className="text-xs text-muted-foreground">
+              Debe ser un número diferente al de tu negocio. Usa tu número
+              personal.
+            </p>
+          </div>
         </CardContent>
       </Card>
 

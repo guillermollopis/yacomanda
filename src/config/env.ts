@@ -39,6 +39,8 @@ const clientSchema = z.object({
   NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: z.string().default("/dashboard"),
   NEXT_PUBLIC_APP_URL: z.url().default("http://localhost:3000"),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
+  NEXT_PUBLIC_FACEBOOK_APP_ID: z.string().min(1).optional(),
+  NEXT_PUBLIC_FACEBOOK_CONFIG_ID: z.string().min(1).optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;
@@ -69,6 +71,10 @@ function validateClientEnv(): ClientEnv {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_FACEBOOK_APP_ID:
+      process.env.NEXT_PUBLIC_FACEBOOK_APP_ID,
+    NEXT_PUBLIC_FACEBOOK_CONFIG_ID:
+      process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID,
   });
   if (!parsed.success) {
     console.error(

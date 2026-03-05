@@ -31,7 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Users, X, MessageSquare, Download } from "lucide-react";
+import { Search, Users, X, MessageSquare, Download, AlertTriangle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CustomersPage() {
@@ -56,7 +56,7 @@ export default function CustomersPage() {
     );
   }
 
-  const { data, isLoading } = trpc.customers.list.useQuery(
+  const { data, isLoading, error, refetch } = trpc.customers.list.useQuery(
     {
       search: debouncedSearch || undefined,
       limit,
@@ -145,7 +145,16 @@ export default function CustomersPage() {
       {/* Table */}
       <Card>
         <CardContent className="p-0">
-          {isLoading ? (
+          {error ? (
+            <div className="flex flex-col items-center gap-3 py-12">
+              <AlertTriangle className="size-8 text-red-500" />
+              <p className="font-medium text-red-700">Error al cargar los clientes</p>
+              <Button variant="outline" onClick={() => refetch()}>
+                <RefreshCw className="mr-2 size-4" />
+                Reintentar
+              </Button>
+            </div>
+          ) : isLoading ? (
             <div className="space-y-0 p-0">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 border-b px-6 py-3">

@@ -60,6 +60,7 @@ const NEXT_ACTION: Record<
   string,
   { status: string; label: string; icon: React.ComponentType<{ className?: string }> } | null
 > = {
+  pending_confirmation: { status: "pending", label: "Forzar confirmación", icon: Check },
   pending: { status: "confirmed", label: "Confirmar pedido", icon: Check },
   confirmed: { status: "preparing", label: "Empezar a preparar", icon: ChefHat },
   paid: { status: "preparing", label: "Empezar a preparar", icon: ChefHat },
@@ -104,7 +105,25 @@ export function OrderDetail({ id }: { id: string }) {
   }
 
   if (!order) {
-    return <p className="text-muted-foreground">Pedido no encontrado.</p>;
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/orders">
+            <ArrowLeft className="mr-1 size-4" />
+            Volver a pedidos
+          </Link>
+        </Button>
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center gap-3 py-12">
+            <XCircle className="size-8 text-muted-foreground" />
+            <p className="font-medium">Pedido no encontrado</p>
+            <p className="text-sm text-muted-foreground text-center">
+              Este pedido no existe o ha sido eliminado.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const action = NEXT_ACTION[order.status ?? "pending"];

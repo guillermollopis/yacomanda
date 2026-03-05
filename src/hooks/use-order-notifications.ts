@@ -15,12 +15,15 @@ function getAudio() {
 
 export function useOrderNotifications() {
   const [permission, setPermission] = useState<NotificationPermission>("default");
-  const initialized = useRef(false);
+  const repeatingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
       setPermission(Notification.permission);
     }
+    return () => {
+      if (repeatingRef.current) clearInterval(repeatingRef.current);
+    };
   }, []);
 
   const requestPermission = useCallback(async () => {
@@ -30,13 +33,15 @@ export function useOrderNotifications() {
     return result;
   }, []);
 
+  const playSound = useCallback(() => {
+    const audio = getAudio();
+    audio?.play().catch(() => {});
+  }, []);
+
   const notify = useCallback(
     (title: string, body: string) => {
-      // Play sound regardless of notification permission
-      const audio = getAudio();
-      audio?.play().catch(() => {});
+      playSound();
 
-      // Show browser notification if permitted
       if (permission === "granted") {
         try {
           new Notification(title, {
@@ -49,11 +54,41 @@ export function useOrderNotifications() {
         }
       }
     },
-    [permission]
+    [permission, playSound]
   );
+
+  const notifyRepeating = useCallback(
+    (newCount: number) => {
+      // Clear existing interval
+      if (repeatingRef.current) {
+        clearInterval(repeatingRef.current);
+        repeatingRef.current = null;
+      }
+
+      if (newCount <= 0) return;
+
+      // Play immediately
+      playSound();
+
+      // Repeat every 30s while new orders exist
+      repeatingRef.current = setInterval(() => {
+        playSound();
+      }, 30_000);
+    },
+    [playSound]
+  );
+
+  const stopRepeating = useCallback(() => {
+    if (repeatingRef.current) {
+      clearInterval(repeatingRef.current);
+      repeatingRef.current = null;
+    }
+  }, []);
 
   return {
     notify,
+    notifyRepeating,
+    stopRepeating,
     requestPermission,
     permission,
     enabled: permission === "granted",

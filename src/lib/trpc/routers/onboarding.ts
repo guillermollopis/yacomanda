@@ -78,6 +78,7 @@ export const onboardingRouter = createTRPCRouter({
         type: z.enum(BUSINESS_TYPES),
         city: z.string().min(1).max(100),
         phone: z.string().min(1).max(20),
+        notificationPhone: z.string().max(20).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -121,6 +122,7 @@ export const onboardingRouter = createTRPCRouter({
           type: input.type,
           city: input.city,
           phone: input.phone,
+          notificationPhone: input.notificationPhone,
         })
         .returning();
 

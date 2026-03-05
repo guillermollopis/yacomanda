@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Camera } from "lucide-react";
+import { Plus, Camera, AlertTriangle, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
 import { CatalogTable, type CatalogItem } from "@/components/catalog/catalog-table";
@@ -15,7 +15,7 @@ export default function CatalogPage() {
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
   const [showImport, setShowImport] = useState(false);
 
-  const { data: items, isLoading } = trpc.catalog.list.useQuery();
+  const { data: items, isLoading, error, refetch } = trpc.catalog.list.useQuery();
   const utils = trpc.useUtils();
 
   const createMutation = trpc.catalog.create.useMutation({
@@ -79,7 +79,16 @@ export default function CatalogPage() {
         <MenuImport onImport={handleImport} />
       )}
 
-      {isLoading ? (
+      {error ? (
+        <div className="rounded-lg border border-red-200 p-8 text-center">
+          <AlertTriangle className="mx-auto size-8 text-red-500" />
+          <p className="mt-3 font-medium text-red-700">Error al cargar la carta</p>
+          <Button variant="outline" className="mt-4" onClick={() => refetch()}>
+            <RefreshCw className="mr-2 size-4" />
+            Reintentar
+          </Button>
+        </div>
+      ) : isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-12 rounded-md" />

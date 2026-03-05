@@ -88,10 +88,6 @@ export default function ContactoPage() {
                 <p className="font-semibold">PROTFORGE SL</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">CIF</p>
-                <p>B75512434</p>
-              </div>
-              <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   Ubicacion
                 </p>

@@ -27,9 +27,6 @@ export default function TerminosPage() {
             <strong>Denominacion social:</strong> PROTFORGE SL
           </li>
           <li>
-            <strong>CIF:</strong> B75512434
-          </li>
-          <li>
             <strong>Domicilio social:</strong> Valencia, Espana
           </li>
           <li>

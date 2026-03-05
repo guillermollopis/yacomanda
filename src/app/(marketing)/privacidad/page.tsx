@@ -18,8 +18,7 @@ export default function PrivacidadPage() {
         <h2>1. Responsable del tratamiento</h2>
         <p>
           <strong>PROTFORGE SL</strong> (en adelante, &ldquo;la
-          Empresa&rdquo;), con CIF B75512434 y domicilio social en Avenida de
-          Aragon 29, puerta 5, 46010 Valencia, Espana, es la responsable del
+          Empresa&rdquo;), con domicilio social en Valencia, Espana, es la responsable del
           tratamiento de los datos personales recogidos a traves de la plataforma
           YaComanda (en adelante, &ldquo;el Servicio&rdquo;).
         </p>

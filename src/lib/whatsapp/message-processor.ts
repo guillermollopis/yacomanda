@@ -12,12 +12,16 @@ import {
   incrementCustomerStats,
   incrementBusinessOrderCount,
   getCustomerLastOrder,
+  getOrderWithCustomerPhone,
 } from "@/lib/db/queries";
 import { sendTextMessage, markAsRead, downloadMedia } from "./client";
 import {
   sendOrderSummaryWithButtons,
   sendEscalationNotice,
   sendOrderConfirmation,
+  sendStatusNotification,
+  sendOwnerNewOrderNotification,
+  sendOwnerAdvanceButton,
 } from "./message-sender";
 import { buildSystemPrompt } from "@/lib/ai/prompt-builder";
 import { parseOrder } from "@/lib/ai/order-parser";
@@ -33,11 +37,89 @@ import { isBusinessOpen } from "./schedule-checker";
 import type { ParsedMessage, ParsedStatus } from "./webhook-handler";
 import type { WaApiOptions } from "./client";
 
+// --- Phone normalization ---
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/[\s\-+]/g, "");
+}
+
+// --- Owner button reply handler ---
+
+// Expected current status for each owner action
+const OWNER_ACTION_EXPECTED_STATUS: Record<string, string[]> = {
+  owner_accept: ["pending"],
+  owner_reject: ["pending", "confirmed", "preparing"],
+  owner_preparing: ["confirmed"],
+  owner_ready: ["preparing"],
+};
+
+async function handleOwnerButtonReply(
+  msg: ParsedMessage,
+  business: { id: string; name: string; waPhoneId: string; waAccessToken: string; notificationPhone: string | null }
+) {
+  const buttonId = msg.buttonReplyId!;
+  const [action, orderId] = buttonId.split(":");
+  if (!orderId) return;
+
+  const bizCtx = { name: business.name, waPhoneId: business.waPhoneId, waAccessToken: business.waAccessToken };
+  const waOpts: WaApiOptions = { phoneNumberId: business.waPhoneId, accessToken: business.waAccessToken };
+  const ownerPhone = msg.from;
+
+  const order = await getOrderWithCustomerPhone(orderId);
+  if (!order) {
+    sendTextMessage(waOpts, ownerPhone, "Este pedido ya no existe.").catch(() => {});
+    return;
+  }
+
+  // Guard: check the order is in the expected status for this action
+  const expectedStatuses = OWNER_ACTION_EXPECTED_STATUS[action];
+  if (expectedStatuses && !expectedStatuses.includes(order.status ?? "")) {
+    sendTextMessage(
+      waOpts,
+      ownerPhone,
+      `Pedido #${order.orderNumber} ya fue actualizado (estado actual: ${order.status}). No se necesita acción.`
+    ).catch(() => {});
+    return;
+  }
+
+  if (action === "owner_accept") {
+    const updated = await updateOrderStatusById(orderId, "confirmed");
+    if (!updated) return;
+    sendStatusNotification(bizCtx, order.customerPhone, order.orderNumber, "confirmed").catch((err) =>
+      console.error("Failed to notify customer:", err)
+    );
+    sendOwnerAdvanceButton(bizCtx, ownerPhone, orderId, order.orderNumber, "confirmed").catch((err) =>
+      console.error("Failed to send owner advance button:", err)
+    );
+  } else if (action === "owner_reject") {
+    const updated = await updateOrderStatusById(orderId, "cancelled");
+    if (!updated) return;
+    sendStatusNotification(bizCtx, order.customerPhone, order.orderNumber, "cancelled").catch((err) =>
+      console.error("Failed to notify customer:", err)
+    );
+  } else if (action === "owner_preparing") {
+    const updated = await updateOrderStatusById(orderId, "preparing");
+    if (!updated) return;
+    sendStatusNotification(bizCtx, order.customerPhone, order.orderNumber, "preparing").catch((err) =>
+      console.error("Failed to notify customer:", err)
+    );
+    sendOwnerAdvanceButton(bizCtx, ownerPhone, orderId, order.orderNumber, "preparing").catch((err) =>
+      console.error("Failed to send owner advance button:", err)
+    );
+  } else if (action === "owner_ready") {
+    const updated = await updateOrderStatusById(orderId, "ready");
+    if (!updated) return;
+    sendStatusNotification(bizCtx, order.customerPhone, order.orderNumber, "ready").catch((err) =>
+      console.error("Failed to notify customer:", err)
+    );
+  }
+}
+
 // --- Button reply handler ---
 
 async function handleButtonReply(
   msg: ParsedMessage,
-  business: { id: string; waPhoneId: string; waAccessToken: string; name: string },
+  business: { id: string; waPhoneId: string; waAccessToken: string; name: string; notificationPhone: string | null },
   customer: { id: string },
   conversation: { id: string },
   waOpts: WaApiOptions
@@ -56,10 +138,11 @@ async function handleButtonReply(
       incrementBusinessOrderCount(business.id),
     ]);
 
-    // Send confirmation
-    const items = (updated.items as Array<{ name: string; quantity: number; unitPrice: string }>) ?? [];
+    // Send confirmation to customer
+    const items = (updated.items as Array<{ name: string; quantity: number; unitPrice: string; lineTotal: string }>) ?? [];
+    const bizCtx = { name: business.name, waPhoneId: business.waPhoneId, waAccessToken: business.waAccessToken };
     await sendOrderConfirmation(
-      { name: business.name, waPhoneId: business.waPhoneId, waAccessToken: business.waAccessToken },
+      bizCtx,
       msg.from,
       {
         orderNumber: updated.orderNumber,
@@ -71,6 +154,22 @@ async function handleButtonReply(
         total: updated.total,
       }
     );
+
+    // Notify owner via WhatsApp (fire-and-forget)
+    if (business.notificationPhone) {
+      sendOwnerNewOrderNotification(bizCtx, business.notificationPhone, {
+        id: orderId,
+        orderNumber: updated.orderNumber,
+        items: items.map((i) => ({
+          name: i.name,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          lineTotal: i.lineTotal ?? (parseFloat(i.unitPrice) * i.quantity).toFixed(2),
+        })),
+        total: updated.total,
+        deliveryType: updated.deliveryType,
+      }).catch((err) => console.error("Failed to notify owner:", err));
+    }
 
     // Save outbound message record
     await saveMessage({
@@ -255,20 +354,36 @@ export async function processInboundMessage(msg: ParsedMessage) {
     accessToken,
   };
 
-  // 2. Find or create customer
+  // 2. Check if sender is the owner (notification phone)
+  if (business.notificationPhone) {
+    const normalizedOwner = normalizePhone(business.notificationPhone);
+    const normalizedSender = normalizePhone(msg.from);
+    if (normalizedOwner === normalizedSender) {
+      // Owner message — handle button replies, ignore everything else
+      if (msg.buttonReplyId) {
+        markAsRead(waOpts, msg.messageId).catch((err) =>
+          console.error("Failed to mark owner message as read:", err)
+        );
+        await handleOwnerButtonReply(msg, biz);
+      }
+      return;
+    }
+  }
+
+  // 3. Find or create customer
   const customer = await findOrCreateCustomer(
     business.id,
     msg.from,
     msg.profileName
   );
 
-  // 3. Find or create conversation
+  // 4. Find or create conversation
   const conversation = await findOrCreateConversation(
     business.id,
     customer.id
   );
 
-  // 4. Handle button replies (before anything else)
+  // 5. Handle button replies (before anything else)
   if (msg.buttonReplyId) {
     // Save inbound button reply
     await saveMessage({

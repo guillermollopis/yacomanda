@@ -36,6 +36,11 @@ export const USER_ROLES = ["owner", "admin", "staff"] as const;
 
 export const DELIVERY_TYPES = ["pickup", "delivery"] as const;
 
+export const KDS_URGENCY = {
+  AMBER_MINUTES: 10,
+  RED_MINUTES: 20,
+} as const;
+
 export const ALLERGENS = [
   "gluten",
   "lactosa",

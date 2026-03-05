@@ -38,8 +38,12 @@ import {
   Check,
   PartyPopper,
   Camera,
+  Download,
+  Smartphone,
+  Share,
 } from "lucide-react";
 import { MenuImport } from "@/components/catalog/menu-import";
+import { EmbeddedSignup } from "@/components/whatsapp/embedded-signup";
 
 const STEPS = [
   { label: "Tu negocio", icon: Store },
@@ -213,6 +217,7 @@ function Step1BasicInfo({
     type: "restaurant" as string,
     city: "",
     phone: "",
+    notificationPhone: "",
   });
 
   const utils = trpc.useUtils();
@@ -296,13 +301,31 @@ function Step1BasicInfo({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone">Teléfono *</Label>
+          <Label htmlFor="phone">Teléfono del negocio *</Label>
           <Input
             id="phone"
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
             placeholder="Ej: +34 612 345 678"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="notificationPhone">
+            Tu número personal (notificaciones)
+          </Label>
+          <Input
+            id="notificationPhone"
+            value={form.notificationPhone}
+            onChange={(e) =>
+              setForm({ ...form, notificationPhone: e.target.value })
+            }
+            placeholder="+34 600 123 456"
+          />
+          <p className="text-xs text-muted-foreground">
+            Recibirás los pedidos nuevos en este WhatsApp con botones para
+            aceptar o rechazar. Opcional.
+          </p>
         </div>
 
         <div className="flex justify-end pt-2">
@@ -313,6 +336,7 @@ function Step1BasicInfo({
                 type: form.type as (typeof BUSINESS_TYPES)[number],
                 city: form.city,
                 phone: form.phone,
+                notificationPhone: form.notificationPhone || undefined,
               })
             }
             disabled={!canSubmit || createMutation.isPending}
@@ -337,49 +361,39 @@ function Step2WhatsApp({
   onBack: () => void;
   businessPhone?: string | null;
 }) {
+  const [connectedPhone, setConnectedPhone] = useState<string | null>(null);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>WhatsApp Business</CardTitle>
         <CardDescription>
-          Nosotros nos encargamos de configurar WhatsApp por ti.
+          Conecta tu WhatsApp Business en un clic.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
-          <div className="flex items-start gap-3">
-            <MessageSquare className="mt-0.5 size-5 text-blue-600 shrink-0" />
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-blue-900">
-                Nuestro equipo lo configura todo
+        {connectedPhone ? (
+          <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+            <Check className="size-5 text-green-600 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-green-900">
+                WhatsApp conectado
               </p>
-              <p className="text-sm text-blue-700">
-                Conectaremos WhatsApp Business API al número de tu negocio.
-                No necesitas hacer nada en Meta ni crear cuentas técnicas.
-              </p>
+              <p className="text-sm text-green-700">{connectedPhone}</p>
             </div>
           </div>
-        </div>
-
-        {businessPhone && (
-          <div className="flex items-center gap-2 rounded-lg border p-3">
-            <Check className="size-4 text-green-600 shrink-0" />
-            <span className="text-sm">
-              Número de WhatsApp:{" "}
-              <span className="font-medium">{businessPhone}</span>
-            </span>
-          </div>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Haz clic en el botón y completa el proceso en la ventana de
+              Facebook. Conectarás tu cuenta de WhatsApp Business
+              automáticamente.
+            </p>
+            <EmbeddedSignup
+              onConnected={(phone) => setConnectedPhone(phone)}
+            />
+          </>
         )}
-
-        <div className="space-y-2 rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">
-          <p className="font-medium text-foreground">¿Cómo funciona?</p>
-          <ol className="ml-4 list-decimal space-y-1">
-            <li>Completa este asistente de configuración</li>
-            <li>Nuestro equipo recibe una notificación automática</li>
-            <li>Configuramos WhatsApp Business en 24-48h</li>
-            <li>Te avisamos por email cuando esté listo</li>
-          </ol>
-        </div>
 
         <div className="flex justify-between pt-2">
           <Button variant="outline" onClick={onBack}>
@@ -387,7 +401,7 @@ function Step2WhatsApp({
             Atrás
           </Button>
           <Button onClick={onNext}>
-            Siguiente
+            {connectedPhone ? "Siguiente" : "Omitir por ahora"}
             <ArrowRight className="ml-2 size-4" />
           </Button>
         </div>
@@ -900,13 +914,85 @@ function ConfettiOverlay() {
         />
       ))}
       <div className="flex h-full items-center justify-center">
-        <div className="rounded-2xl bg-background/95 p-8 text-center shadow-xl">
+        <div className="pointer-events-auto rounded-2xl bg-background/95 p-8 text-center shadow-xl max-w-sm mx-4">
           <PartyPopper className="mx-auto mb-4 size-12 text-primary" />
           <h2 className="text-2xl font-bold">¡Enhorabuena!</h2>
           <p className="mt-2 text-muted-foreground">
             Tu negocio está listo. Redirigiendo al panel...
           </p>
+          <OnboardingInstallHint />
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== Onboarding Install Hint ====================
+
+function OnboardingInstallHint() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    // Check if already in standalone mode
+    if (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      ("standalone" in navigator &&
+        (navigator as { standalone?: boolean }).standalone === true)
+    ) {
+      return;
+    }
+
+    // iOS: always show manual hint
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIos) {
+      setShow(true);
+      return;
+    }
+
+    // Chrome/Edge: listen for install availability
+    function handlePrompt(e: Event) {
+      e.preventDefault();
+      setShow(true);
+    }
+    window.addEventListener("beforeinstallprompt", handlePrompt);
+    return () =>
+      window.removeEventListener("beforeinstallprompt", handlePrompt);
+  }, []);
+
+  if (!show) return null;
+
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  return (
+    <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-left">
+      <div className="flex items-start gap-2">
+        {isIos ? (
+          <Smartphone className="mt-0.5 size-4 shrink-0 text-primary" />
+        ) : (
+          <Download className="mt-0.5 size-4 shrink-0 text-primary" />
+        )}
+        <p className="text-xs text-muted-foreground">
+          {isIos ? (
+            <>
+              Pulsa{" "}
+              <Share className="inline size-3 align-text-bottom text-blue-500" />{" "}
+              <span className="font-medium text-foreground">Compartir</span> y
+              luego{" "}
+              <span className="font-medium text-foreground">
+                &quot;Añadir a pantalla de inicio&quot;
+              </span>{" "}
+              para acceder como app.
+            </>
+          ) : (
+            <>
+              <span className="font-medium text-foreground">
+                Instala YaComanda
+              </span>{" "}
+              desde tu navegador para acceder con un toque y recibir
+              notificaciones de pedidos.
+            </>
+          )}
+        </p>
       </div>
     </div>
   );

@@ -8,11 +8,13 @@ import {
   Settings,
   CreditCard,
   ShieldCheck,
+  ChefHat,
 } from "lucide-react";
 
 export const navItems = [
   { href: "/dashboard", label: "Inicio", icon: LayoutDashboard },
   { href: "/orders", label: "Pedidos", icon: ShoppingCart },
+  { href: "/orders/cocina", label: "Cocina", icon: ChefHat },
   { href: "/catalog", label: "Carta", icon: UtensilsCrossed },
   { href: "/conversations", label: "Conversaciones", icon: MessageSquare },
   { href: "/customers", label: "Clientes", icon: Users },

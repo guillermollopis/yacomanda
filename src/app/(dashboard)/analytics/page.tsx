@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc/react";
 import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -38,18 +40,23 @@ export default function AnalyticsPage() {
 
   const dateRange = { from: new Date(from), to: new Date(to + "T23:59:59") };
 
-  const { data: ordersByDay, isLoading: l1 } =
+  const { data: ordersByDay, isLoading: l1, error: e1, refetch: r1 } =
     trpc.analytics.ordersByDay.useQuery(dateRange);
-  const { data: revenueByDay, isLoading: l2 } =
+  const { data: revenueByDay, isLoading: l2, error: e2, refetch: r2 } =
     trpc.analytics.revenueByDay.useQuery(dateRange);
-  const { data: topProducts, isLoading: l3 } =
+  const { data: topProducts, isLoading: l3, error: e3, refetch: r3 } =
     trpc.analytics.topProducts.useQuery(dateRange);
-  const { data: peakHours, isLoading: l4 } =
+  const { data: peakHours, isLoading: l4, error: e4, refetch: r4 } =
     trpc.analytics.peakHours.useQuery(dateRange);
-  const { data: customerBreakdown, isLoading: l5 } =
+  const { data: customerBreakdown, isLoading: l5, error: e5, refetch: r5 } =
     trpc.analytics.customerBreakdown.useQuery(dateRange);
 
   const isLoading = l1 || l2 || l3 || l4 || l5;
+  const hasError = e1 || e2 || e3 || e4 || e5;
+
+  function refetchAll() {
+    r1(); r2(); r3(); r4(); r5();
+  }
 
   return (
     <div className="space-y-6">
@@ -82,7 +89,19 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {isLoading ? (
+      {hasError ? (
+        <div className="rounded-lg border border-red-200 p-8 text-center">
+          <AlertTriangle className="mx-auto size-8 text-red-500" />
+          <p className="mt-3 font-medium text-red-700">Error al cargar las estadísticas</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Comprueba tu conexión e inténtalo de nuevo.
+          </p>
+          <Button variant="outline" className="mt-4" onClick={refetchAll}>
+            <RefreshCw className="mr-2 size-4" />
+            Reintentar
+          </Button>
+        </div>
+      ) : isLoading ? (
         <div className="grid gap-6 lg:grid-cols-2">
           {Array.from({ length: 5 }).map((_, i) => (
             <Card key={i}>
