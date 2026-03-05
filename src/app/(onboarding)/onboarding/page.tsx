@@ -86,6 +86,8 @@ export default function OnboardingPage() {
     if (!status || status.onboardingCompleted) return;
     if (!status.hasBusinessId) {
       setStep(0);
+    } else if (!status.business?.waPhoneId) {
+      setStep(1);
     } else if (!status.business?.hasCatalogItems) {
       setStep(2);
     }
