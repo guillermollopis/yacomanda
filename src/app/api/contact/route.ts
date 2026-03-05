@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const resendKey = process.env.RESEND_API_KEY;
     if (resendKey) {
       const resend = new Resend(resendKey);
-      await resend.emails.send({
+      const result = await resend.emails.send({
         from: FROM_EMAIL,
         to: ADMIN_EMAIL,
         replyTo: data.email,
@@ -39,6 +39,14 @@ export async function POST(req: Request) {
           <p style="margin-top:16px;color:#666;font-size:12px;">Enviado desde el formulario de contacto de yacomanda.com</p>
         `,
       });
+
+      if (result.error) {
+        console.error("[contact] Resend error:", result.error);
+        return NextResponse.json(
+          { error: "Error al enviar el email" },
+          { status: 500 }
+        );
+      }
     } else {
       console.warn("[contact] RESEND_API_KEY not set, email not sent");
     }
