@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ export function EmbeddedSignup({
   const [state, setState] = useState<SignupState>({ status: "idle" });
   const [sdkReady, setSdkReady] = useState(false);
   const signupDataRef = useRef<{ wabaId: string; phoneNumberId: string } | null>(null);
+  const pendingCodeRef = useRef<string | null>(null);
 
   const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
   const configId = process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID;
@@ -57,43 +58,68 @@ export function EmbeddedSignup({
     },
   });
 
+  const connectMutationRef = useRef(connectMutation);
+  connectMutationRef.current = connectMutation;
+
+  // Try to submit if we have both code and signup data
+  function trySubmit() {
+    const code = pendingCodeRef.current;
+    const signupData = signupDataRef.current;
+    if (code && signupData) {
+      pendingCodeRef.current = null;
+      connectMutationRef.current.mutate({
+        code,
+        wabaId: signupData.wabaId,
+        phoneNumberId: signupData.phoneNumberId,
+      });
+    }
+  }
+
   // Listen for WA_EMBEDDED_SIGNUP session info event (v3)
-  const handleMessage = useCallback((event: MessageEvent) => {
-    if (
-      event.origin !== "https://www.facebook.com" &&
-      event.origin !== "https://web.facebook.com"
-    ) {
-      return;
-    }
+  useEffect(() => {
+    if (!appId || !configId) return;
 
-    try {
-      const data =
-        typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-
-      if (data.type === "WA_EMBEDDED_SIGNUP") {
-        const { phone_number_id, waba_id } = data.data ?? {};
-        if (phone_number_id && waba_id) {
-          signupDataRef.current = {
-            wabaId: waba_id,
-            phoneNumberId: phone_number_id,
-          };
-        }
+    function handleMessage(event: MessageEvent) {
+      // Accept messages from any facebook domain
+      if (
+        typeof event.origin === "string" &&
+        !event.origin.includes("facebook.com")
+      ) {
+        return;
       }
-    } catch {
-      // Not a JSON message we care about
+
+      try {
+        const data =
+          typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+
+        if (data.type === "WA_EMBEDDED_SIGNUP") {
+          const { phone_number_id, waba_id } = data.data ?? {};
+          if (phone_number_id && waba_id) {
+            signupDataRef.current = {
+              wabaId: waba_id,
+              phoneNumberId: phone_number_id,
+            };
+            // If we already have the code, submit now
+            trySubmit();
+          }
+        }
+      } catch {
+        // Not a JSON message we care about
+      }
     }
-  }, []);
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [appId, configId]);
 
   // Load Facebook SDK
   useEffect(() => {
     if (!appId || !configId) return;
 
-    window.addEventListener("message", handleMessage);
-
     // If SDK already loaded
     if (window.FB) {
       setSdkReady(true);
-      return () => window.removeEventListener("message", handleMessage);
+      return;
     }
 
     window.fbAsyncInit = () => {
@@ -115,36 +141,41 @@ export function EmbeddedSignup({
       script.defer = true;
       document.body.appendChild(script);
     }
-
-    return () => window.removeEventListener("message", handleMessage);
-  }, [appId, configId, handleMessage]);
+  }, [appId, configId]);
 
   function handleLogin() {
     if (!window.FB || !configId) return;
 
     setState({ status: "loading" });
     signupDataRef.current = null;
+    pendingCodeRef.current = null;
 
     window.FB.login(
       (response) => {
         if (response.authResponse?.code) {
-          const code = response.authResponse.code;
-          const signupData = signupDataRef.current;
+          pendingCodeRef.current = response.authResponse.code;
 
-          if (!signupData) {
-            setState({
-              status: "error",
-              message:
-                "No se recibió la información de WhatsApp. Inténtalo de nuevo.",
-            });
-            return;
+          if (signupDataRef.current) {
+            // Signup data already arrived via message event
+            trySubmit();
+          } else {
+            // Wait up to 5 seconds for the message event
+            let attempts = 0;
+            const interval = setInterval(() => {
+              attempts++;
+              if (signupDataRef.current) {
+                clearInterval(interval);
+                trySubmit();
+              } else if (attempts >= 25) {
+                clearInterval(interval);
+                setState({
+                  status: "error",
+                  message:
+                    "No se recibió la información de WhatsApp. Inténtalo de nuevo.",
+                });
+              }
+            }, 200);
           }
-
-          connectMutation.mutate({
-            code,
-            wabaId: signupData.wabaId,
-            phoneNumberId: signupData.phoneNumberId,
-          });
         } else {
           setState({ status: "idle" });
         }
@@ -175,10 +206,10 @@ export function EmbeddedSignup({
               La conexión automática de WhatsApp no está disponible aún.
               Contacta con{" "}
               <a
-                href="mailto:soporte@yacomanda.com"
+                href="mailto:hola@yacomanda.com"
                 className="underline"
               >
-                soporte@yacomanda.com
+                hola@yacomanda.com
               </a>{" "}
               para que te ayudemos a conectar tu número.
             </p>
