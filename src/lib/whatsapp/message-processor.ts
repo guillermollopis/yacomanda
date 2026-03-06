@@ -170,7 +170,7 @@ async function handleButtonReply(
 
       // Bizum first (zero fees)
       if (hasBizum) {
-        payLines.push(`\n*Bizum* (sin comisiones): envia ${updated.total}\u20ac al ${business.bizumPhone}`);
+        payLines.push(`\n*Bizum* (sin comisiones): envia ${updated.total}\u20ac al ${business.bizumPhone}\nUna vez enviado, manda aqui el comprobante o captura de pantalla.`);
       }
 
       // Stripe card payment (optional)

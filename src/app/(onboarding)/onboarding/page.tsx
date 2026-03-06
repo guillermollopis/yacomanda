@@ -643,74 +643,87 @@ function Step4Payments({
   onNext: () => void;
   onBack: () => void;
 }) {
-  const [wantsOnline, setWantsOnline] = useState<boolean | null>(null);
+  const [bizumPhone, setBizumPhone] = useState("");
+  const updateMutation = trpc.settings.updateBusinessSettings.useMutation({
+    onSuccess: () => onNext(),
+    onError: (err) => toast.error(err.message),
+  });
+
+  function handleNext() {
+    if (bizumPhone.trim()) {
+      updateMutation.mutate({ bizumPhone: bizumPhone.trim() });
+    } else {
+      onNext();
+    }
+  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pagos online</CardTitle>
+        <CardTitle>Cobros a clientes</CardTitle>
         <CardDescription>
-          ¿Quieres que tus clientes puedan pagar directamente desde WhatsApp?
+          Configura como quieres que tus clientes paguen sus pedidos. Sin
+          comisiones.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => setWantsOnline(true)}
-            className={`rounded-lg border-2 p-4 text-left transition-colors ${
-              wantsOnline === true
-                ? "border-primary bg-primary/5"
-                : "border-muted hover:border-muted-foreground/30"
-            }`}
-          >
-            <CreditCard className="mb-2 size-5 text-primary" />
-            <p className="font-medium text-sm">Pagos online</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Tus clientes pueden pagar con tarjeta. Nuestro equipo te ayuda a
-              configurarlo.
-            </p>
-          </button>
-          <button
-            type="button"
-            onClick={() => setWantsOnline(false)}
-            className={`rounded-lg border-2 p-4 text-left transition-colors ${
-              wantsOnline === false
-                ? "border-primary bg-primary/5"
-                : "border-muted hover:border-muted-foreground/30"
-            }`}
-          >
-            <Store className="mb-2 size-5 text-muted-foreground" />
-            <p className="font-medium text-sm">Solo efectivo</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Los clientes pagan en el local. Puedes activar pagos online más
-              tarde.
-            </p>
-          </button>
+      <CardContent className="space-y-5">
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-2">
+          <p className="text-sm font-medium text-green-900">
+            Bizum — sin comisiones
+          </p>
+          <p className="text-sm text-green-700">
+            Tus clientes reciben tu numero de Bizum al confirmar el pedido y te
+            pagan directamente. El dinero llega a tu cuenta al instante, sin
+            intermediarios ni comisiones.
+          </p>
         </div>
 
-        {wantsOnline === true && (
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-2">
-            <p className="text-sm font-medium text-blue-900">
-              Nosotros lo configuramos
-            </p>
-            <p className="text-sm text-blue-700">
-              Al completar el asistente, nuestro equipo recibirá una
-              notificación y te ayudará a configurar Stripe en 24-48h. Te
-              contactaremos por email.
-            </p>
-          </div>
-        )}
+        <div className="space-y-2">
+          <Label htmlFor="onb-bizum">Tu numero de Bizum</Label>
+          <Input
+            id="onb-bizum"
+            value={bizumPhone}
+            onChange={(e) => setBizumPhone(e.target.value)}
+            placeholder="+34 600 123 456"
+            className="max-w-xs"
+          />
+          <p className="text-xs text-muted-foreground">
+            Normalmente es tu numero de movil. Puedes cambiarlo en Ajustes mas
+            tarde.
+          </p>
+        </div>
+
+        <div className="rounded-lg border p-4 space-y-2">
+          <p className="text-sm font-medium text-muted-foreground">
+            Otras opciones (configurables en Ajustes)
+          </p>
+          <ul className="text-xs text-muted-foreground space-y-1">
+            <li>
+              <strong>Tarjeta</strong> — Conecta Stripe en Ajustes &gt; Pagos
+              (comision Stripe ~1.5%)
+            </li>
+            <li>
+              <strong>Efectivo</strong> — Siempre disponible, el cliente paga al
+              recoger
+            </li>
+          </ul>
+        </div>
 
         <div className="flex justify-between pt-2">
           <Button variant="outline" onClick={onBack}>
             <ArrowLeft className="mr-2 size-4" />
-            Atrás
+            Atras
           </Button>
-          <Button onClick={onNext} disabled={wantsOnline === null}>
-            Siguiente
-            <ArrowRight className="ml-2 size-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={onNext}>
+              <SkipForward className="mr-2 size-4" />
+              Saltar
+            </Button>
+            <Button onClick={handleNext} disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? "Guardando..." : "Siguiente"}
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
