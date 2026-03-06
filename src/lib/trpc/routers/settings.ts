@@ -261,8 +261,16 @@ export const settingsRouter = createTRPCRouter({
       // 4. Subscribe WABA to our app's webhooks
       await subscribeApp(wabaId, longToken);
 
-      // 5. Register phone number for messaging
-      await registerPhoneNumber(phoneNumberId, longToken);
+      // 5. Register phone number for messaging (skip if already registered via Embedded Signup)
+      try {
+        await registerPhoneNumber(phoneNumberId, longToken);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "";
+        // PIN mismatch or already registered — safe to continue
+        if (!msg.includes("133005") && !msg.includes("already registered")) {
+          throw e;
+        }
+      }
 
       // 6. Get display phone number (if not from discovery)
       if (!displayPhone) {
