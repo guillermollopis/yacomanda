@@ -102,19 +102,15 @@ export function matchAndPriceItems(
   return { matched, unmatched };
 }
 
-const IVA_RATE = 10; // percent
-
 export function calculateOrderTotals(items: MatchedItem[]) {
-  // Use integer cents to avoid floating-point rounding errors
-  const subtotalCents = items.reduce(
+  // In Spain, menu prices already include IVA — no separate tax
+  const totalCents = items.reduce(
     (sum, i) => sum + Math.round(parseFloat(i.lineTotal) * 100),
     0
   );
-  const taxCents = Math.round(subtotalCents * IVA_RATE / 100);
-  const totalCents = subtotalCents + taxCents;
   return {
-    subtotal: (subtotalCents / 100).toFixed(2),
-    tax: (taxCents / 100).toFixed(2),
+    subtotal: (totalCents / 100).toFixed(2),
+    tax: "0.00",
     total: (totalCents / 100).toFixed(2),
   };
 }
@@ -131,8 +127,7 @@ export function buildOrderSummaryText(
     "",
     ...lines,
     "",
-    `Subtotal: ${totals.subtotal}€`,
-    `IVA (10%): ${totals.tax}€`,
     `*Total: ${totals.total}€*`,
+    "(IVA incluido)",
   ].join("\n");
 }
