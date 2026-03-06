@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { Menu, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,8 +21,13 @@ export function MobileSidebar() {
   const { data: isAdmin } = trpc.admin.isAdmin.useQuery(undefined, {
     staleTime: 10 * 60 * 1000,
   });
+  const { data: billing } = trpc.settings.getBillingStatus.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000,
+  });
 
   const allItems = isAdmin ? [...navItems, ...adminNavItems] : navItems;
+  const showUpgrade =
+    billing?.plan === "trial" || billing?.subscriptionStatus !== "active";
 
   return (
     <>
@@ -68,6 +73,16 @@ export function MobileSidebar() {
                 </Link>
               );
             })}
+            {showUpgrade && (
+              <Link
+                href="/billing"
+                onClick={() => setOpen(false)}
+                className="mt-4 flex items-center gap-2 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 px-3 py-2.5 text-sm font-medium text-white"
+              >
+                <Sparkles className="size-4 shrink-0" />
+                Actualizar plan
+              </Link>
+            )}
           </nav>
         </SheetContent>
       </Sheet>

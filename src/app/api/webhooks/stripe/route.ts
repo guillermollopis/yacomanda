@@ -95,8 +95,34 @@ function extractCustomerId(
   return customer.id;
 }
 
+const PLAN_ORDER_LIMITS: Record<string, number> = {
+  esencial: 500,
+  profesional: 2000,
+  negocio: 999999,
+};
+
 async function handleBillingEvent(event: Stripe.Event) {
   switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const businessId = session.metadata?.businessId;
+      const plan = session.metadata?.plan;
+      const customerId = extractCustomerId(session.customer);
+
+      if (businessId && plan && customerId) {
+        await db
+          .update(businesses)
+          .set({
+            plan,
+            stripeCustomerId: customerId,
+            subscriptionStatus: "active",
+            monthlyOrderLimit: PLAN_ORDER_LIMITS[plan] ?? 500,
+            updatedAt: new Date(),
+          })
+          .where(eq(businesses.id, businessId));
+      }
+      break;
+    }
     case "invoice.paid": {
       const invoice = event.data.object as Stripe.Invoice;
       const customerId = extractCustomerId(invoice.customer);

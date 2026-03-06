@@ -8,7 +8,7 @@ import {
   createConnectAccountLink,
   getConnectAccountStatus,
 } from "@/lib/payments/connect";
-import { createBillingPortalSession } from "@/lib/payments/billing";
+import { createBillingPortalSession, createCheckoutSession } from "@/lib/payments/billing";
 import { BOT_TONES, DELIVERY_TYPES } from "@/config/constants";
 import {
   exchangeCodeForToken,
@@ -198,6 +198,29 @@ export const settingsRouter = createTRPCRouter({
     const { url } = await createBillingPortalSession(biz.stripeCustomerId);
     return { url };
   }),
+
+  createCheckoutLink: businessProcedure
+    .input(z.object({ plan: z.enum(["esencial", "profesional", "negocio"]) }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.role === "staff") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Solo admin u owner pueden cambiar de plan",
+        });
+      }
+
+      const [biz] = await db
+        .select({ stripeCustomerId: businesses.stripeCustomerId })
+        .from(businesses)
+        .where(eq(businesses.id, ctx.businessId));
+
+      const { url } = await createCheckoutSession(
+        ctx.businessId,
+        input.plan,
+        biz?.stripeCustomerId
+      );
+      return { url };
+    }),
 
   getWhatsAppStatus: businessProcedure.query(async ({ ctx }) => {
     const [biz] = await db

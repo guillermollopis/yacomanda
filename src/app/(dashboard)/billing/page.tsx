@@ -12,7 +12,7 @@ import {
 import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Check, Sparkles } from "lucide-react";
 
 const PLAN_LABELS: Record<string, string> = {
   trial: "Prueba gratuita",
@@ -28,10 +28,42 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   cancelled: { label: "Cancelada", className: "bg-red-100 text-red-800 border-red-200" },
 };
 
+const PLANS = [
+  {
+    id: "esencial" as const,
+    name: "Esencial",
+    price: "29",
+    orders: "500",
+    features: ["Bot IA WhatsApp", "Panel de gestión", "Cobro Bizum + tarjeta", "Gestión de carta"],
+  },
+  {
+    id: "profesional" as const,
+    name: "Profesional",
+    price: "79",
+    orders: "2.000",
+    popular: true,
+    features: ["Todo de Esencial", "Analíticas avanzadas", "Soporte prioritario", "Gestión de equipo", "Exportación de datos"],
+  },
+  {
+    id: "negocio" as const,
+    name: "Negocio",
+    price: "199",
+    orders: "Ilimitados",
+    features: ["Todo de Profesional", "Multi-local", "Account manager", "API personalizada"],
+  },
+];
+
 export default function BillingPage() {
   const { data, isLoading } = trpc.settings.getBillingStatus.useQuery();
 
   const portalMutation = trpc.settings.createPortalLink.useMutation({
+    onSuccess: (res) => {
+      window.location.href = res.url;
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const checkoutMutation = trpc.settings.createCheckoutLink.useMutation({
     onSuccess: (res) => {
       window.location.href = res.url;
     },
@@ -57,6 +89,7 @@ export default function BillingPage() {
   const limitOrders = data?.monthlyOrderLimit ?? 500;
   const usagePercent = Math.min((usedOrders / limitOrders) * 100, 100);
   const statusConfig = STATUS_LABELS[status] ?? STATUS_LABELS.trial;
+  const canUpgrade = plan === "trial" || status !== "active";
 
   return (
     <div className="space-y-6">
@@ -141,6 +174,65 @@ export default function BillingPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Upgrade plans */}
+      {canUpgrade && (
+        <>
+          <div>
+            <h2 className="text-lg font-semibold">Elige tu plan</h2>
+            <p className="text-sm text-muted-foreground">
+              Todos los planes incluyen 14 días de prueba gratis.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {PLANS.map((p) => {
+              const isCurrent = p.id === plan;
+              return (
+                <Card
+                  key={p.id}
+                  className={p.popular ? "border-primary shadow-md" : ""}
+                >
+                  {p.popular && (
+                    <div className="bg-primary px-4 py-1 text-center text-xs font-medium text-white rounded-t-lg">
+                      Más popular
+                    </div>
+                  )}
+                  <CardHeader>
+                    <CardTitle className="text-lg">{p.name}</CardTitle>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-bold">{p.price}&euro;</span>
+                      <span className="text-sm text-muted-foreground">/mes</span>
+                    </div>
+                    <CardDescription>{p.orders} pedidos/mes</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <ul className="space-y-2 text-sm">
+                      {p.features.map((f) => (
+                        <li key={f} className="flex items-center gap-2">
+                          <Check className="size-4 text-green-600 shrink-0" />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      className="w-full"
+                      variant={p.popular ? "default" : "outline"}
+                      disabled={isCurrent || checkoutMutation.isPending}
+                      onClick={() => checkoutMutation.mutate({ plan: p.id })}
+                    >
+                      {isCurrent
+                        ? "Plan actual"
+                        : checkoutMutation.isPending
+                          ? "Redirigiendo..."
+                          : "Elegir plan"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

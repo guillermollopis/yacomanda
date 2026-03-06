@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/badge";
 import { MobileSidebar } from "./mobile-sidebar";
@@ -29,12 +30,14 @@ export function DashboardHeader() {
             <span className="truncate text-sm font-semibold max-w-[180px] md:max-w-[280px]">
               {data.name}
             </span>
-            <Badge
-              variant="secondary"
-              className={planColors[data.plan ?? "esencial"] ?? planColors.esencial}
-            >
-              {data.plan ?? "esencial"}
-            </Badge>
+            <Link href="/billing">
+              <Badge
+                variant="secondary"
+                className={`cursor-pointer hover:opacity-80 ${planColors[data.plan ?? "esencial"] ?? planColors.esencial}`}
+              >
+                {data.plan ?? "esencial"}
+              </Badge>
+            </Link>
           </div>
         )}
       </div>
