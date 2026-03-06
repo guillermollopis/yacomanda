@@ -65,7 +65,7 @@ export const businesses = pgTable(
     botActive: boolean("bot_active").default(false),
     botTone: text("bot_tone").default("informal"),
     welcomeMessage: text("welcome_message"),
-    kitchenSchedule: jsonb("kitchen_schedule").default({}),
+    kitchenSchedule: jsonb("kitchen_schedule"),
     minPreparationMinutes: integer("min_preparation_minutes").default(30),
     deliveryEnabled: boolean("delivery_enabled").default(false),
     pickupEnabled: boolean("pickup_enabled").default(true),

@@ -306,16 +306,16 @@ export default function WhatsAppSettingsPage() {
               <CardTitle>Horario de cocina</CardTitle>
               <CardDescription>
                 Fuera de este horario, el bot avisará que estáis cerrados pero
-                seguirá aceptando pedidos para cuando abráis. Si no configuras
-                ningún día, el bot acepta pedidos 24/7.
+                seguirá aceptando pedidos para cuando abráis. Activa los días
+                que tu negocio está abierto.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {Object.values(closedDays).every(Boolean) && (
-            <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-800">
-              Sin horario configurado — el bot acepta pedidos <strong>24/7</strong>. Activa los días que abres para limitar el horario.
+            <div className="rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
+              Todos los días están cerrados. El bot informará a los clientes de que estáis cerrados. Activa los días que abres.
             </div>
           )}
           {DAY_KEYS.map((day) => (

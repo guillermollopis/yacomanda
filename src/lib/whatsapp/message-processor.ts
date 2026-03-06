@@ -463,15 +463,21 @@ export async function processInboundMessage(msg: ParsedMessage) {
   }
 
   // 10. Check business hours (pass info to AI instead of blocking)
+  // null = never configured = 24/7, {} = all days closed, {monday: ...} = has schedule
   let closedInfo: { nextOpenTime?: string } | undefined;
-  const schedule = (business.kitchenSchedule ?? {}) as Record<string, unknown>;
-  if (Object.keys(schedule).length > 0) {
-    const { open, nextOpenTime } = isBusinessOpen(
-      schedule as Record<string, { open: string; close: string }>,
-      business.timezone ?? "Europe/Madrid"
-    );
-    if (!open) {
-      closedInfo = { nextOpenTime };
+  if (business.kitchenSchedule !== null && business.kitchenSchedule !== undefined) {
+    const schedule = business.kitchenSchedule as Record<string, { open: string; close: string }>;
+    if (Object.keys(schedule).length === 0) {
+      // All days explicitly closed
+      closedInfo = {};
+    } else {
+      const { open, nextOpenTime } = isBusinessOpen(
+        schedule,
+        business.timezone ?? "Europe/Madrid"
+      );
+      if (!open) {
+        closedInfo = { nextOpenTime };
+      }
     }
   }
 
