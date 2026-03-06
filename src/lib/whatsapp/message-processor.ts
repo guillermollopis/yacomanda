@@ -462,7 +462,8 @@ export async function processInboundMessage(msg: ParsedMessage) {
     return;
   }
 
-  // 10. Check business hours
+  // 10. Check business hours (pass info to AI instead of blocking)
+  let closedInfo: { nextOpenTime?: string } | undefined;
   const schedule = (business.kitchenSchedule ?? {}) as Record<string, unknown>;
   if (Object.keys(schedule).length > 0) {
     const { open, nextOpenTime } = isBusinessOpen(
@@ -470,18 +471,7 @@ export async function processInboundMessage(msg: ParsedMessage) {
       business.timezone ?? "Europe/Madrid"
     );
     if (!open) {
-      const text = nextOpenTime
-        ? `Lo sentimos, estamos cerrados ahora. Abrimos a las ${nextOpenTime}. ¡Te esperamos!`
-        : "Lo sentimos, estamos cerrados ahora. ¡Vuelve pronto!";
-      await sendTextMessage(waOpts, msg.from, text);
-      await saveMessage({
-        conversationId: conversation.id,
-        businessId: business.id,
-        direction: "outbound",
-        messageType: "text",
-        content: text,
-      });
-      return;
+      closedInfo = { nextOpenTime };
     }
   }
 
@@ -503,7 +493,7 @@ export async function processInboundMessage(msg: ParsedMessage) {
 
     // Fetch last order for repeat ordering
     const lastOrder = await getCustomerLastOrder(customer.id);
-    const systemPrompt = buildSystemPrompt(biz, catalog, lastOrder ?? undefined);
+    const systemPrompt = buildSystemPrompt(biz, catalog, lastOrder ?? undefined, closedInfo);
 
     const result = await parseOrder(systemPrompt, content, history);
     aiParsed = result;

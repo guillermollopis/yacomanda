@@ -35,10 +35,15 @@ interface LastOrderForPrompt {
   total: string | null;
 }
 
+interface ClosedInfo {
+  nextOpenTime?: string;
+}
+
 export function buildSystemPrompt(
   business: BusinessForPrompt,
   catalog: CatalogItemForPrompt[],
-  lastOrder?: LastOrderForPrompt
+  lastOrder?: LastOrderForPrompt,
+  closedInfo?: ClosedInfo
 ): string {
   const typeLabel =
     BUSINESS_TYPE_LABELS[business.type ?? "restaurant"] ?? "negocio";
@@ -109,6 +114,12 @@ MODALIDADES: ${deliveryModes || "recogida"}
 ${business.minPreparationMinutes ? `TIEMPO MÍNIMO DE PREPARACIÓN: ${business.minPreparationMinutes} minutos` : ""}
 ${deliveryInstructions}
 ${repeatContext}
+${closedInfo ? `
+ESTADO ACTUAL: EL NEGOCIO ESTÁ CERRADO AHORA.${closedInfo.nextOpenTime ? ` Próxima apertura: ${closedInfo.nextOpenTime}.` : ""}
+- Informa amablemente al cliente de que estáis cerrados.
+- PUEDES tomar pedidos igualmente. Dile que el pedido se preparará en cuanto abráis.
+- Si el cliente quiere pedir, procesa el pedido normalmente (type "order").
+- Si el cliente pregunta el horario, responde con la próxima apertura.` : ""}
 
 REGLAS:
 - IDIOMA: Responde en el mismo idioma que use el cliente. Si escribe en español, responde en español. Si escribe en inglés, responde en inglés. Si no estás seguro, usa español por defecto.

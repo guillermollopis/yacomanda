@@ -1,11 +1,15 @@
 import { z } from "zod/v4";
-import { eq, and, desc, sql, count, notInArray, or, isNull } from "drizzle-orm";
+import { eq, and, desc, sql, count, notInArray, inArray, or, isNull, lt } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, businessProcedure } from "../init";
 import { db } from "@/lib/db";
-import { orders, customers, businesses, messages } from "@/lib/db/schema";
+import { orders, customers, businesses } from "@/lib/db/schema";
 import { sendStatusNotification } from "@/lib/whatsapp/message-sender";
 import { saveMessage } from "@/lib/db/queries";
+
+const ACTIVE_STATUSES = ["pending", "confirmed", "payment_sent", "paid", "preparing", "ready"];
+const TERMINAL_STATUSES = ["completed", "cancelled"];
+const PENDING_EXPIRY_MINUTES = 15;
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   pending_confirmation: ["pending", "cancelled"],
@@ -32,9 +36,29 @@ export const ordersRouter = createTRPCRouter({
       const limit = input?.limit ?? 20;
       const offset = input?.offset ?? 0;
 
+      // Auto-expire old pending_confirmation orders (fire-and-forget)
+      const expiryThreshold = new Date(Date.now() - PENDING_EXPIRY_MINUTES * 60_000);
+      db.update(orders)
+        .set({ status: "cancelled", updatedAt: new Date() })
+        .where(
+          and(
+            eq(orders.businessId, ctx.businessId),
+            eq(orders.status, "pending_confirmation"),
+            lt(orders.createdAt, expiryThreshold)
+          )
+        )
+        .then(() => {})
+        .catch((err) => console.error("Auto-expire error:", err));
+
       const conditions = [eq(orders.businessId, ctx.businessId)];
-      if (input?.status) {
-        conditions.push(eq(orders.status, input.status));
+      const status = input?.status;
+
+      if (status === "active") {
+        conditions.push(inArray(orders.status, ACTIVE_STATUSES));
+      } else if (status === "history") {
+        conditions.push(inArray(orders.status, [...TERMINAL_STATUSES, "pending_confirmation"]));
+      } else if (status) {
+        conditions.push(eq(orders.status, status));
       }
 
       const [items, [total]] = await Promise.all([

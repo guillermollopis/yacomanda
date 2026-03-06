@@ -46,8 +46,9 @@ import {
 } from "lucide-react";
 
 const STATUS_FILTERS = [
+  { value: "active", label: "Activos" },
   { value: "all", label: "Todos" },
-  { value: "pending_confirmation", label: "Esperando cliente" },
+  { value: "history", label: "Historial" },
   { value: "pending", label: "Pendientes" },
   { value: "confirmed", label: "Confirmados" },
   { value: "preparing", label: "Preparando" },
@@ -69,7 +70,7 @@ const NEXT_ACTION: Record<
 };
 
 export default function OrdersPage() {
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("active");
   const [page, setPage] = useState(0);
   const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
   const limit = 20;
@@ -89,7 +90,7 @@ export default function OrdersPage() {
   useEffect(() => {
     if (data == null) return;
     const current = data.total;
-    if (prevTotalRef.current !== null && current > prevTotalRef.current && statusFilter === "all") {
+    if (prevTotalRef.current !== null && current > prevTotalRef.current && (statusFilter === "all" || statusFilter === "active")) {
       notify("Nuevo pedido", "Se ha recibido un nuevo pedido");
     }
     prevTotalRef.current = current;
@@ -165,8 +166,10 @@ export default function OrdersPage() {
         <div className="flex flex-col items-center gap-2 py-12">
           <PackageCheck className="size-10 text-muted-foreground/50" />
           <p className="text-sm text-muted-foreground">
-            {statusFilter === "all"
-              ? "Aún no hay pedidos. Los pedidos de WhatsApp aparecerán aquí."
+            {statusFilter === "active"
+              ? "No hay pedidos activos. Los nuevos pedidos de WhatsApp aparecerán aquí."
+              : statusFilter === "all"
+              ? "Aún no hay pedidos."
               : "No hay pedidos con este filtro."}
           </p>
         </div>
