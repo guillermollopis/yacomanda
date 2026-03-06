@@ -31,9 +31,11 @@ export default function PaymentSettingsPage() {
           <div className="flex items-center gap-3">
             <CreditCard className="size-5" />
             <div>
-              <CardTitle>Stripe Connect</CardTitle>
+              <CardTitle>Cobros a clientes</CardTitle>
               <CardDescription>
-                Conecta tu cuenta de Stripe para recibir pagos de tus clientes.
+                Conecta Stripe para que tus clientes puedan pagar sus pedidos
+                por tarjeta directamente desde WhatsApp. Sin configurar esto,
+                los pedidos se procesan sin cobro online.
               </CardDescription>
             </div>
           </div>

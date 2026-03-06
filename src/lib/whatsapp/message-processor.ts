@@ -34,6 +34,10 @@ import {
   buildOrderSummaryText,
 } from "./order-builder";
 import { isBusinessOpen } from "./schedule-checker";
+import { createPaymentLink } from "@/lib/payments/connect";
+import { db } from "@/lib/db";
+import { orders } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import type { ParsedMessage, ParsedStatus } from "./webhook-handler";
 import type { WaApiOptions } from "./client";
 
@@ -119,7 +123,7 @@ async function handleOwnerButtonReply(
 
 async function handleButtonReply(
   msg: ParsedMessage,
-  business: { id: string; waPhoneId: string; waAccessToken: string; name: string; notificationPhone: string | null },
+  business: { id: string; waPhoneId: string; waAccessToken: string; name: string; notificationPhone: string | null; stripeAccountId: string | null; currency: string | null },
   customer: { id: string },
   conversation: { id: string },
   waOpts: WaApiOptions
@@ -154,6 +158,45 @@ async function handleButtonReply(
         total: updated.total,
       }
     );
+
+    // Send payment link if Stripe Connect is configured
+    if (business.stripeAccountId && updated.total) {
+      try {
+        const totalAmount = parseFloat(updated.total);
+        if (totalAmount > 0) {
+          const { url } = await createPaymentLink({
+            stripeAccountId: business.stripeAccountId,
+            amount: totalAmount,
+            currency: business.currency ?? "eur",
+            orderNumber: updated.orderNumber,
+            orderId,
+          });
+
+          if (url) {
+            // Update order with payment URL and status
+            await updateOrderStatusById(orderId, "payment_sent");
+            await db
+              .update(orders)
+              .set({ paymentUrl: url })
+              .where(eq(orders.id, orderId));
+
+            const payText = `Para pagar tu pedido #${updated.orderNumber} (${updated.total}\u20ac), haz clic aqui:\n${url}`;
+            await sendTextMessage(waOpts, msg.from, payText);
+
+            await saveMessage({
+              conversationId: conversation.id,
+              businessId: business.id,
+              direction: "outbound",
+              messageType: "text",
+              content: payText,
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to create payment link:", err);
+        // Order continues without payment — restaurant can collect in person
+      }
+    }
 
     // Notify owner via WhatsApp (fire-and-forget)
     if (business.notificationPhone) {
