@@ -123,7 +123,7 @@ async function handleOwnerButtonReply(
 
 async function handleButtonReply(
   msg: ParsedMessage,
-  business: { id: string; waPhoneId: string; waAccessToken: string; name: string; notificationPhone: string | null; stripeAccountId: string | null; currency: string | null },
+  business: { id: string; waPhoneId: string; waAccessToken: string; name: string; notificationPhone: string | null; stripeAccountId: string | null; currency: string | null; bizumPhone: string | null },
   customer: { id: string },
   conversation: { id: string },
   waOpts: WaApiOptions
@@ -159,13 +159,25 @@ async function handleButtonReply(
       }
     );
 
-    // Send payment link if Stripe Connect is configured
-    if (business.stripeAccountId && updated.total) {
-      try {
-        const totalAmount = parseFloat(updated.total);
-        if (totalAmount > 0) {
+    // Send payment options
+    const hasBizum = !!business.bizumPhone;
+    const hasStripe = !!business.stripeAccountId;
+    const totalAmount = parseFloat(updated.total ?? "0");
+
+    if ((hasBizum || hasStripe) && totalAmount > 0) {
+      const payLines: string[] = [];
+      payLines.push(`*Pago del pedido #${updated.orderNumber} (${updated.total}\u20ac):*`);
+
+      // Bizum first (zero fees)
+      if (hasBizum) {
+        payLines.push(`\n*Bizum* (sin comisiones): envia ${updated.total}\u20ac al ${business.bizumPhone}`);
+      }
+
+      // Stripe card payment (optional)
+      if (hasStripe) {
+        try {
           const { url } = await createPaymentLink({
-            stripeAccountId: business.stripeAccountId,
+            stripeAccountId: business.stripeAccountId!,
             amount: totalAmount,
             currency: business.currency ?? "eur",
             orderNumber: updated.orderNumber,
@@ -173,29 +185,31 @@ async function handleButtonReply(
           });
 
           if (url) {
-            // Update order with payment URL and status
-            await updateOrderStatusById(orderId, "payment_sent");
             await db
               .update(orders)
               .set({ paymentUrl: url })
               .where(eq(orders.id, orderId));
 
-            const payText = `Para pagar tu pedido #${updated.orderNumber} (${updated.total}\u20ac), haz clic aqui:\n${url}`;
-            await sendTextMessage(waOpts, msg.from, payText);
-
-            await saveMessage({
-              conversationId: conversation.id,
-              businessId: business.id,
-              direction: "outbound",
-              messageType: "text",
-              content: payText,
-            });
+            payLines.push(`\n*Tarjeta*: ${url}`);
           }
+        } catch (err) {
+          console.error("Failed to create payment link:", err);
         }
-      } catch (err) {
-        console.error("Failed to create payment link:", err);
-        // Order continues without payment — restaurant can collect in person
       }
+
+      // Cash option
+      payLines.push(`\n*Efectivo*: paga al recoger tu pedido`);
+
+      const payText = payLines.join("\n");
+      await sendTextMessage(waOpts, msg.from, payText);
+
+      await saveMessage({
+        conversationId: conversation.id,
+        businessId: business.id,
+        direction: "outbound",
+        messageType: "text",
+        content: payText,
+      });
     }
 
     // Notify owner via WhatsApp (fire-and-forget)

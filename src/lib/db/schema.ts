@@ -70,6 +70,7 @@ export const businesses = pgTable(
     deliveryEnabled: boolean("delivery_enabled").default(false),
     pickupEnabled: boolean("pickup_enabled").default(true),
 
+    bizumPhone: text("bizum_phone"),
     onboardingCompleted: boolean("onboarding_completed").default(false),
     logoUrl: text("logo_url"),
 

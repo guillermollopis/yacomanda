@@ -25,7 +25,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { BOT_TONES } from "@/config/constants";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Save, CheckCircle2, Bot, Truck, Clock, BellRing } from "lucide-react";
+import { Save, CheckCircle2, Bot, Truck, Clock, BellRing, Wallet } from "lucide-react";
 import { EmbeddedSignup } from "@/components/whatsapp/embedded-signup";
 
 const TONE_LABELS: Record<string, string> = {
@@ -69,6 +69,7 @@ export default function WhatsAppSettingsPage() {
     deliveryEnabled: false,
     pickupEnabled: true,
     notificationPhone: "",
+    bizumPhone: "",
   });
 
   const [schedule, setSchedule] = useState<WeekSchedule>({});
@@ -85,6 +86,7 @@ export default function WhatsAppSettingsPage() {
         deliveryEnabled: data.deliveryEnabled ?? false,
         pickupEnabled: data.pickupEnabled ?? true,
         notificationPhone: data.notificationPhone ?? "",
+        bizumPhone: data.bizumPhone ?? "",
       });
 
       const savedSchedule = (data.kitchenSchedule ?? {}) as WeekSchedule;
@@ -125,6 +127,7 @@ export default function WhatsAppSettingsPage() {
       pickupEnabled: form.pickupEnabled,
       kitchenSchedule: finalSchedule,
       notificationPhone: form.notificationPhone || undefined,
+      bizumPhone: form.bizumPhone || undefined,
     });
   }
 
@@ -226,6 +229,39 @@ export default function WhatsAppSettingsPage() {
             <p className="text-xs text-muted-foreground">
               Debe ser un número diferente al de tu negocio. Usa tu número
               personal.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bizum */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Wallet className="size-5" />
+            <div>
+              <CardTitle>Bizum</CardTitle>
+              <CardDescription>
+                Permite a tus clientes pagar por Bizum sin comisiones. El bot
+                enviará tu número de Bizum junto con el resumen del pedido.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="bizumPhone">Número de Bizum</Label>
+            <Input
+              id="bizumPhone"
+              value={form.bizumPhone}
+              onChange={(e) =>
+                setForm({ ...form, bizumPhone: e.target.value })
+              }
+              placeholder="+34 600 123 456"
+              className="max-w-xs"
+            />
+            <p className="text-xs text-muted-foreground">
+              Deja vacío si no quieres ofrecer Bizum como método de pago.
             </p>
           </div>
         </CardContent>

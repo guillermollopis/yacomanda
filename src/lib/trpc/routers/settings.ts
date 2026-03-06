@@ -66,6 +66,7 @@ export const settingsRouter = createTRPCRouter({
       pickupEnabled: biz.pickupEnabled,
       kitchenSchedule: biz.kitchenSchedule,
       notificationPhone: biz.notificationPhone,
+      bizumPhone: biz.bizumPhone,
     };
   }),
 
@@ -91,6 +92,7 @@ export const settingsRouter = createTRPCRouter({
           )
           .optional(),
         notificationPhone: z.string().max(20).optional(),
+        bizumPhone: z.string().max(20).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
