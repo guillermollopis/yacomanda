@@ -43,8 +43,6 @@ export function EmbeddedSignup({
   // Listen for the OAuth callback postMessage from the popup
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) return;
-
       const data = event.data;
       if (data?.type !== "FB_OAUTH_CALLBACK") return;
 

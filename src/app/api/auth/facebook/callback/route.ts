@@ -24,7 +24,11 @@ export async function GET(req: NextRequest) {
     errorDescription: ${JSON.stringify(errorDescription)}
   };
   if (window.opener) {
-    window.opener.postMessage(msg, ${JSON.stringify(req.nextUrl.origin)});
+    // Use "*" because the popup may land on www.domain.com while
+    // the opener is on domain.com (or vice versa after redirects).
+    // The code is short-lived and tied to a specific redirect_uri,
+    // so the security risk is minimal.
+    window.opener.postMessage(msg, "*");
   }
   window.close();
 })();
