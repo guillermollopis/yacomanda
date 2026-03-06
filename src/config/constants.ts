@@ -41,6 +41,24 @@ export const KDS_URGENCY = {
   RED_MINUTES: 20,
 } as const;
 
+export const DEFAULT_CATEGORIES = [
+  "Entrantes",
+  "Ensaladas",
+  "Sopas",
+  "Carnes",
+  "Pescados",
+  "Pastas",
+  "Pizzas",
+  "Hamburguesas",
+  "Bocadillos",
+  "Postres",
+  "Bebidas",
+  "Cafés",
+  "Cócteles",
+  "Tapas",
+  "Infantil",
+] as const;
+
 export const ALLERGENS = [
   "gluten",
   "lactosa",

@@ -80,10 +80,6 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Ajustes generales</h1>
-          <p className="text-sm text-muted-foreground">Configura los datos de tu negocio.</p>
-        </div>
         <Card>
           <CardHeader>
             <Skeleton className="h-5 w-48" />
@@ -108,13 +104,6 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Ajustes generales</h1>
-        <p className="text-sm text-muted-foreground">
-          Configura los datos de tu negocio.
-        </p>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Información del negocio</CardTitle>

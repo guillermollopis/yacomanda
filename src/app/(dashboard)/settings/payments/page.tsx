@@ -26,13 +26,6 @@ export default function PaymentSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Ajustes de Pagos</h1>
-        <p className="text-sm text-muted-foreground">
-          Configura tus métodos de cobro con Stripe.
-        </p>
-      </div>
-
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">

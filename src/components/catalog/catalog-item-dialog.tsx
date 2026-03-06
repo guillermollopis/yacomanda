@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,27 +11,49 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ALLERGENS } from "@/config/constants";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ALLERGENS, DEFAULT_CATEGORIES } from "@/config/constants";
 import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
 import type { CatalogItem } from "@/components/catalog/catalog-table";
 
 type Allergen = (typeof ALLERGENS)[number];
 
+const CUSTOM_VALUE = "__custom__";
+
 export function CatalogItemDialog({
   open,
   onOpenChange,
   item,
+  existingCategories,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item?: CatalogItem | null;
+  existingCategories?: string[];
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
+  const [customCategory, setCustomCategory] = useState(false);
   const [allergens, setAllergens] = useState<Allergen[]>([]);
+
+  // Merge default categories with existing ones from the business
+  const allCategories = useMemo(() => {
+    const set = new Set<string>();
+    DEFAULT_CATEGORIES.forEach((c) => set.add(c));
+    existingCategories?.forEach((c) => {
+      if (c) set.add(c.charAt(0).toUpperCase() + c.slice(1));
+    });
+    return [...set].sort((a, b) => a.localeCompare(b, "es"));
+  }, [existingCategories]);
 
   const utils = trpc.useUtils();
 
@@ -40,16 +62,23 @@ export function CatalogItemDialog({
       setName(item.name);
       setDescription(item.description ?? "");
       setPrice(item.price);
-      setCategory(item.category ?? "");
+      const cat = item.category ?? "";
+      setCategory(cat);
+      // If the category isn't in the list, show custom input
+      const normalized = cat.charAt(0).toUpperCase() + cat.slice(1);
+      setCustomCategory(
+        cat !== "" && !allCategories.includes(normalized)
+      );
       setAllergens((item.allergens ?? []) as Allergen[]);
     } else {
       setName("");
       setDescription("");
       setPrice("");
       setCategory("");
+      setCustomCategory(false);
       setAllergens([]);
     }
-  }, [item, open]);
+  }, [item, open, allCategories]);
 
   const createMutation = trpc.catalog.create.useMutation({
     onSuccess: () => {
@@ -74,11 +103,16 @@ export function CatalogItemDialog({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    // Normalize: capitalize first letter
+    const normalizedCategory = category
+      ? category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()
+      : undefined;
+
     const data = {
       name,
       description: description || undefined,
       price,
-      category: category || undefined,
+      category: normalizedCategory,
       allergens,
     };
 
@@ -95,6 +129,16 @@ export function CatalogItemDialog({
         ? prev.filter((a) => a !== allergen)
         : [...prev, allergen]
     );
+  }
+
+  function handleCategoryChange(value: string) {
+    if (value === CUSTOM_VALUE) {
+      setCustomCategory(true);
+      setCategory("");
+    } else {
+      setCustomCategory(false);
+      setCategory(value);
+    }
   }
 
   return (
@@ -135,13 +179,48 @@ export function CatalogItemDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category">Categoría</Label>
-              <Input
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="Entrantes, Pizzas..."
-              />
+              <Label>Categoría</Label>
+              {customCategory ? (
+                <div className="flex gap-1">
+                  <Input
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    placeholder="Nombre de la categoría"
+                    autoFocus
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0 text-xs"
+                    onClick={() => {
+                      setCustomCategory(false);
+                      setCategory("");
+                    }}
+                  >
+                    Lista
+                  </Button>
+                </div>
+              ) : (
+                <Select
+                  value={category || undefined}
+                  onValueChange={handleCategoryChange}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allCategories.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value={CUSTOM_VALUE}>
+                      + Nueva categoría...
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
           <div className="space-y-2">

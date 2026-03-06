@@ -131,12 +131,6 @@ export default function WhatsAppSettingsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Ajustes de WhatsApp</h1>
-          <p className="text-sm text-muted-foreground">
-            Configura tu integración con WhatsApp y el bot.
-          </p>
-        </div>
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-40 rounded-lg" />
         ))}
@@ -148,12 +142,6 @@ export default function WhatsAppSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Ajustes de WhatsApp</h1>
-        <p className="text-sm text-muted-foreground">
-          Configura tu integración con WhatsApp y el bot.
-        </p>
-      </div>
 
       {/* Connection status */}
       <Card>

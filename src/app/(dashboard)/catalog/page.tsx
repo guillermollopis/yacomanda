@@ -102,6 +102,13 @@ export default function CatalogPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         item={editingItem}
+        existingCategories={[
+          ...new Set(
+            (items ?? [])
+              .map((i) => i.category)
+              .filter((c): c is string => !!c)
+          ),
+        ]}
       />
     </div>
   );

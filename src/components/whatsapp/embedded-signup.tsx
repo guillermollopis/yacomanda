@@ -199,30 +199,36 @@ export function EmbeddedSignup({
   }
 
   return (
-    <Button
-      onClick={handleLogin}
-      disabled={state.status === "loading"}
-      size="lg"
-      className="gap-2"
-    >
-      {state.status === "loading" ? (
-        connectMutation.isPending ? (
-          <>
-            <Loader2 className="size-4 animate-spin" />
-            Conectando cuenta...
-          </>
+    <div className="space-y-3">
+      <Button
+        onClick={handleLogin}
+        disabled={state.status === "loading"}
+        size="lg"
+        className="gap-2"
+      >
+        {state.status === "loading" ? (
+          connectMutation.isPending ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Conectando cuenta...
+            </>
+          ) : (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Esperando Facebook...
+            </>
+          )
         ) : (
           <>
-            <Loader2 className="size-4 animate-spin" />
-            Esperando Facebook...
+            <MessageSquare className="size-4" />
+            Conectar WhatsApp
           </>
-        )
-      ) : (
-        <>
-          <MessageSquare className="size-4" />
-          Conectar WhatsApp
-        </>
-      )}
-    </Button>
+        )}
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        Necesitarás tu cuenta de Facebook para verificar tu número de WhatsApp.
+        El proceso tarda unos 2 minutos.
+      </p>
+    </div>
   );
 }

@@ -64,15 +64,24 @@ export function CatalogTable({
     onError: (err) => toast.error(err.message),
   });
 
-  // Group by category
-  const grouped = items.reduce<Record<string, CatalogItem[]>>((acc, item) => {
-    const cat = item.category || "Sin categoría";
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(item);
-    return acc;
-  }, {});
+  // Group by category (case-insensitive, display first-seen casing)
+  const categoryMap = new Map<string, { display: string; items: CatalogItem[] }>();
+  for (const item of items) {
+    const raw = item.category || "Sin categoría";
+    const key = raw.toLowerCase().trim();
+    const existing = categoryMap.get(key);
+    if (existing) {
+      existing.items.push(item);
+    } else {
+      // Capitalize first letter for consistent display
+      const display = raw.charAt(0).toUpperCase() + raw.slice(1);
+      categoryMap.set(key, { display, items: [item] });
+    }
+  }
 
-  const categories = Object.keys(grouped).sort();
+  const categories = [...categoryMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b, "es"))
+    .map(([, v]) => v);
 
   if (items.length === 0) {
     return (
@@ -85,9 +94,9 @@ export function CatalogTable({
   return (
     <div className="space-y-6">
       {categories.map((cat) => (
-        <div key={cat}>
+        <div key={cat.display}>
           <h3 className="mb-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            {cat}
+            {cat.display}
           </h3>
           <div className="rounded-md border">
             <Table>
@@ -101,7 +110,7 @@ export function CatalogTable({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {grouped[cat].map((item) => (
+                {cat.items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>
                       <div>
