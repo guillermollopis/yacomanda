@@ -40,6 +40,7 @@ export function EmbeddedSignup({
 }) {
   const [state, setState] = useState<SignupState>({ status: "idle" });
   const [sdkReady, setSdkReady] = useState(false);
+  const [sdkFailed, setSdkFailed] = useState(false);
   const signupDataRef = useRef<{ wabaId: string; phoneNumberId: string } | null>(null);
   const pendingCodeRef = useRef<string | null>(null);
 
@@ -139,8 +140,16 @@ export function EmbeddedSignup({
       script.src = "https://connect.facebook.net/en_US/sdk.js";
       script.async = true;
       script.defer = true;
+      script.onerror = () => setSdkFailed(true);
       document.body.appendChild(script);
     }
+
+    // Timeout: if SDK doesn't load in 10s, show error
+    const timeout = setTimeout(() => {
+      if (!window.FB) setSdkFailed(true);
+    }, 10000);
+
+    return () => clearTimeout(timeout);
   }, [appId, configId]);
 
   function handleLogin() {
@@ -258,10 +267,43 @@ export function EmbeddedSignup({
     );
   }
 
+  if (sdkFailed) {
+    return (
+      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="mt-0.5 size-5 text-yellow-600 shrink-0" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-yellow-900">
+              No se pudo cargar la conexión con Facebook
+            </p>
+            <p className="text-sm text-yellow-700">
+              Puede que tu navegador esté bloqueando el contenido de Facebook
+              (extensiones de privacidad o bloqueadores de anuncios). Desactívalos
+              temporalmente y recarga la página, o contacta con{" "}
+              <a href="mailto:hola@yacomanda.com" className="underline">
+                hola@yacomanda.com
+              </a>{" "}
+              para que te ayudemos.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!sdkReady) {
+    return (
+      <Button disabled size="lg" className="gap-2">
+        <Loader2 className="size-4 animate-spin" />
+        Cargando conexión con Facebook...
+      </Button>
+    );
+  }
+
   return (
     <Button
       onClick={handleLogin}
-      disabled={!sdkReady || state.status === "loading"}
+      disabled={state.status === "loading"}
       size="lg"
       className="gap-2"
     >
