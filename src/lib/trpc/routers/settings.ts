@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { eq } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, businessProcedure } from "../init";
 import { db } from "@/lib/db";
@@ -278,7 +278,18 @@ export const settingsRouter = createTRPCRouter({
         displayPhone = phoneInfo.displayPhoneNumber;
       }
 
-      // 7. Update business record
+      // 7. Clear this phone ID from any other business (prevent routing conflicts)
+      await db
+        .update(businesses)
+        .set({ waPhoneId: null, waAccessToken: null, waBusinessId: null })
+        .where(
+          and(
+            eq(businesses.waPhoneId, phoneNumberId),
+            sql`${businesses.id} != ${ctx.businessId}`
+          )
+        );
+
+      // 8. Update business record
       await db
         .update(businesses)
         .set({
