@@ -3,14 +3,21 @@ import { getServerEnv } from "@/config/env";
 const GRAPH_API = "https://graph.facebook.com/v22.0";
 
 /**
- * Exchange the short-lived auth code from FB.login for a user access token.
+ * Exchange the short-lived auth code for a user access token.
+ * When using OAuth redirect flow, redirectUri must match the one used in the auth request.
  */
-export async function exchangeCodeForToken(code: string): Promise<string> {
+export async function exchangeCodeForToken(
+  code: string,
+  redirectUri?: string
+): Promise<string> {
   const env = getServerEnv();
   const url = new URL(`${GRAPH_API}/oauth/access_token`);
   url.searchParams.set("client_id", process.env.NEXT_PUBLIC_FACEBOOK_APP_ID!);
   url.searchParams.set("client_secret", env.WHATSAPP_APP_SECRET);
   url.searchParams.set("code", code);
+  if (redirectUri) {
+    url.searchParams.set("redirect_uri", redirectUri);
+  }
 
   const res = await fetch(url.toString());
   if (!res.ok) {
@@ -120,4 +127,64 @@ export async function getPhoneNumber(
     displayPhoneNumber: data.display_phone_number,
     verifiedName: data.verified_name,
   };
+}
+
+/**
+ * Discover the WABA ID and phone number ID from a user access token.
+ * Walks: /me/businesses -> /owned_whatsapp_business_accounts -> /phone_numbers
+ */
+export async function discoverWhatsAppAccount(
+  token: string
+): Promise<{ wabaId: string; phoneNumberId: string; displayPhoneNumber: string }> {
+  // 1. Get user's businesses
+  const bizRes = await fetch(
+    `${GRAPH_API}/me/businesses?fields=id&limit=50`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!bizRes.ok) {
+    const body = await bizRes.text();
+    throw new Error(`Failed to list businesses: ${bizRes.status} ${body}`);
+  }
+  const bizData = (await bizRes.json()) as {
+    data: { id: string }[];
+  };
+
+  // 2. For each business, look for WABAs
+  for (const biz of bizData.data) {
+    const wabaRes = await fetch(
+      `${GRAPH_API}/${biz.id}/owned_whatsapp_business_accounts?fields=id&limit=50`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!wabaRes.ok) continue;
+
+    const wabaData = (await wabaRes.json()) as {
+      data: { id: string }[];
+    };
+
+    // 3. For each WABA, look for phone numbers
+    for (const waba of wabaData.data) {
+      const phoneRes = await fetch(
+        `${GRAPH_API}/${waba.id}/phone_numbers?fields=id,display_phone_number&limit=10`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!phoneRes.ok) continue;
+
+      const phoneData = (await phoneRes.json()) as {
+        data: { id: string; display_phone_number: string }[];
+      };
+
+      if (phoneData.data.length > 0) {
+        const phone = phoneData.data[0];
+        return {
+          wabaId: waba.id,
+          phoneNumberId: phone.id,
+          displayPhoneNumber: phone.display_phone_number,
+        };
+      }
+    }
+  }
+
+  throw new Error(
+    "No se encontró ninguna cuenta de WhatsApp Business. Completa el proceso de registro en Facebook primero."
+  );
 }

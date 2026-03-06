@@ -4,28 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Loader2, MessageSquare, AlertCircle } from "lucide-react";
-
-declare global {
-  interface Window {
-    FB?: {
-      init(params: {
-        appId: string;
-        cookie: boolean;
-        xfbml: boolean;
-        version: string;
-      }): void;
-      login(
-        callback: (response: {
-          authResponse?: { code?: string };
-          status: string;
-        }) => void,
-        params: Record<string, unknown>
-      ): void;
-    };
-    fbAsyncInit?: () => void;
-  }
-}
+import {
+  CheckCircle2,
+  Loader2,
+  MessageSquare,
+  AlertCircle,
+} from "lucide-react";
 
 type SignupState =
   | { status: "idle" }
@@ -39,10 +23,7 @@ export function EmbeddedSignup({
   onConnected?: (phoneNumber: string) => void;
 }) {
   const [state, setState] = useState<SignupState>({ status: "idle" });
-  const [sdkReady, setSdkReady] = useState(false);
-  const [sdkFailed, setSdkFailed] = useState(false);
-  const signupDataRef = useRef<{ wabaId: string; phoneNumberId: string } | null>(null);
-  const pendingCodeRef = useRef<string | null>(null);
+  const popupRef = useRef<Window | null>(null);
 
   const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
   const configId = process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID;
@@ -59,147 +40,104 @@ export function EmbeddedSignup({
     },
   });
 
-  const connectMutationRef = useRef(connectMutation);
-  connectMutationRef.current = connectMutation;
-
-  // Try to submit if we have both code and signup data
-  function trySubmit() {
-    const code = pendingCodeRef.current;
-    const signupData = signupDataRef.current;
-    if (code && signupData) {
-      pendingCodeRef.current = null;
-      connectMutationRef.current.mutate({
-        code,
-        wabaId: signupData.wabaId,
-        phoneNumberId: signupData.phoneNumberId,
-      });
-    }
-  }
-
-  // Listen for WA_EMBEDDED_SIGNUP session info event (v3)
+  // Listen for the OAuth callback postMessage from the popup
   useEffect(() => {
-    if (!appId || !configId) return;
-
     function handleMessage(event: MessageEvent) {
-      // Accept messages from any facebook domain
-      if (
-        typeof event.origin === "string" &&
-        !event.origin.includes("facebook.com")
-      ) {
+      if (event.origin !== window.location.origin) return;
+
+      const data = event.data;
+      if (data?.type !== "FB_OAUTH_CALLBACK") return;
+
+      // Close the popup if still open
+      popupRef.current?.close();
+      popupRef.current = null;
+
+      if (data.error) {
+        if (data.error === "access_denied") {
+          setState({ status: "idle" });
+        } else {
+          setState({
+            status: "error",
+            message: data.errorDescription || data.error,
+          });
+        }
         return;
       }
 
-      try {
-        const data =
-          typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-
-        if (data.type === "WA_EMBEDDED_SIGNUP") {
-          const { phone_number_id, waba_id } = data.data ?? {};
-          if (phone_number_id && waba_id) {
-            signupDataRef.current = {
-              wabaId: waba_id,
-              phoneNumberId: phone_number_id,
-            };
-            // If we already have the code, submit now
-            trySubmit();
-          }
-        }
-      } catch {
-        // Not a JSON message we care about
+      if (data.code) {
+        setState({ status: "loading" });
+        const redirectUri = `${window.location.origin}/api/auth/facebook/callback`;
+        connectMutation.mutate({ code: data.code, redirectUri });
+      } else {
+        setState({ status: "idle" });
       }
     }
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [appId, configId]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load Facebook SDK
+  // Poll to detect if user closed the popup without completing
   useEffect(() => {
+    if (state.status !== "loading" || !popupRef.current) return;
+
+    const interval = setInterval(() => {
+      if (popupRef.current?.closed) {
+        popupRef.current = null;
+        clearInterval(interval);
+        // Only reset if we haven't received the callback yet
+        setState((prev) =>
+          prev.status === "loading" && !connectMutation.isPending
+            ? { status: "idle" }
+            : prev
+        );
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [state.status, connectMutation.isPending]);
+
+  function handleLogin() {
     if (!appId || !configId) return;
 
-    // If SDK already loaded
-    if (window.FB) {
-      setSdkReady(true);
+    setState({ status: "loading" });
+
+    const redirectUri = `${window.location.origin}/api/auth/facebook/callback`;
+
+    const params = new URLSearchParams({
+      client_id: appId,
+      redirect_uri: redirectUri,
+      config_id: configId,
+      response_type: "code",
+      override_default_response_type: "true",
+      scope:
+        "whatsapp_business_management,whatsapp_business_messaging,business_management",
+    });
+
+    const oauthUrl = `https://www.facebook.com/v22.0/dialog/oauth?${params.toString()}`;
+
+    // Open popup centered on screen
+    const width = 700;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const popup = window.open(
+      oauthUrl,
+      "fb_wa_signup",
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
+    );
+
+    if (!popup) {
+      setState({
+        status: "error",
+        message:
+          "No se pudo abrir la ventana de Facebook. Desactiva el bloqueador de ventanas emergentes e inténtalo de nuevo.",
+      });
       return;
     }
 
-    window.fbAsyncInit = () => {
-      window.FB!.init({
-        appId,
-        cookie: true,
-        xfbml: true,
-        version: "v22.0",
-      });
-      setSdkReady(true);
-    };
-
-    // Load SDK script if not already present
-    if (!document.getElementById("facebook-jssdk")) {
-      const script = document.createElement("script");
-      script.id = "facebook-jssdk";
-      script.src = "https://connect.facebook.net/en_US/sdk.js";
-      script.async = true;
-      script.defer = true;
-      script.onerror = () => setSdkFailed(true);
-      document.body.appendChild(script);
-    }
-
-    // Timeout: if SDK doesn't load in 10s, show error
-    const timeout = setTimeout(() => {
-      if (!window.FB) setSdkFailed(true);
-    }, 10000);
-
-    return () => clearTimeout(timeout);
-  }, [appId, configId]);
-
-  function handleLogin() {
-    if (!window.FB || !configId) return;
-
-    setState({ status: "loading" });
-    signupDataRef.current = null;
-    pendingCodeRef.current = null;
-
-    window.FB.login(
-      (response) => {
-        if (response.authResponse?.code) {
-          pendingCodeRef.current = response.authResponse.code;
-
-          if (signupDataRef.current) {
-            // Signup data already arrived via message event
-            trySubmit();
-          } else {
-            // Wait up to 5 seconds for the message event
-            let attempts = 0;
-            const interval = setInterval(() => {
-              attempts++;
-              if (signupDataRef.current) {
-                clearInterval(interval);
-                trySubmit();
-              } else if (attempts >= 25) {
-                clearInterval(interval);
-                setState({
-                  status: "error",
-                  message:
-                    "No se recibió la información de WhatsApp. Inténtalo de nuevo.",
-                });
-              }
-            }, 200);
-          }
-        } else {
-          setState({ status: "idle" });
-        }
-      },
-      {
-        config_id: configId,
-        response_type: "code",
-        override_default_response_type: true,
-        extras: {
-          setup: {},
-          featureType: "",
-          sessionInfoVersion: "3",
-        },
-      }
-    );
+    popupRef.current = popup;
   }
 
   if (!appId || !configId) {
@@ -209,18 +147,15 @@ export function EmbeddedSignup({
           <MessageSquare className="mt-0.5 size-5 text-yellow-600 shrink-0" />
           <div className="space-y-1">
             <p className="text-sm font-medium text-yellow-900">
-              Configuración pendiente
+              Configuracion pendiente
             </p>
             <p className="text-sm text-yellow-700">
-              La conexión automática de WhatsApp no está disponible aún.
+              La conexion automatica de WhatsApp no esta disponible aun.
               Contacta con{" "}
-              <a
-                href="mailto:hola@yacomanda.com"
-                className="underline"
-              >
+              <a href="mailto:hola@yacomanda.com" className="underline">
                 hola@yacomanda.com
               </a>{" "}
-              para que te ayudemos a conectar tu número.
+              para que te ayudemos a conectar tu numero.
             </p>
           </div>
         </div>
@@ -249,54 +184,19 @@ export function EmbeddedSignup({
           <AlertCircle className="mt-0.5 size-5 text-red-600 shrink-0" />
           <div className="space-y-1">
             <p className="text-sm font-medium text-red-900">
-              Error de conexión
+              Error de conexion
             </p>
             <p className="text-sm text-red-700">{state.message}</p>
           </div>
         </div>
         <Button
-          onClick={() => {
-            setState({ status: "idle" });
-          }}
+          onClick={() => setState({ status: "idle" })}
           variant="outline"
           size="sm"
         >
           Reintentar
         </Button>
       </div>
-    );
-  }
-
-  if (sdkFailed) {
-    return (
-      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="mt-0.5 size-5 text-yellow-600 shrink-0" />
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-yellow-900">
-              No se pudo cargar la conexión con Facebook
-            </p>
-            <p className="text-sm text-yellow-700">
-              Puede que tu navegador esté bloqueando el contenido de Facebook
-              (extensiones de privacidad o bloqueadores de anuncios). Desactívalos
-              temporalmente y recarga la página, o contacta con{" "}
-              <a href="mailto:hola@yacomanda.com" className="underline">
-                hola@yacomanda.com
-              </a>{" "}
-              para que te ayudemos.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!sdkReady) {
-    return (
-      <Button disabled size="lg" className="gap-2">
-        <Loader2 className="size-4 animate-spin" />
-        Cargando conexión con Facebook...
-      </Button>
     );
   }
 
@@ -308,10 +208,17 @@ export function EmbeddedSignup({
       className="gap-2"
     >
       {state.status === "loading" ? (
-        <>
-          <Loader2 className="size-4 animate-spin" />
-          Conectando...
-        </>
+        connectMutation.isPending ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Conectando cuenta...
+          </>
+        ) : (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Esperando Facebook...
+          </>
+        )
       ) : (
         <>
           <MessageSquare className="size-4" />

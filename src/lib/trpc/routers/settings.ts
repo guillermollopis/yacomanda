@@ -16,6 +16,7 @@ import {
   subscribeApp,
   registerPhoneNumber,
   getPhoneNumber,
+  discoverWhatsAppAccount,
 } from "@/lib/whatsapp/embedded-signup";
 
 export const settingsRouter = createTRPCRouter({
@@ -223,8 +224,9 @@ export const settingsRouter = createTRPCRouter({
     .input(
       z.object({
         code: z.string().min(1),
-        wabaId: z.string().min(1),
-        phoneNumberId: z.string().min(1),
+        redirectUri: z.string().optional(),
+        wabaId: z.string().min(1).optional(),
+        phoneNumberId: z.string().min(1).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -236,27 +238,45 @@ export const settingsRouter = createTRPCRouter({
       }
 
       // 1. Exchange auth code for short-lived token
-      const shortToken = await exchangeCodeForToken(input.code);
+      const shortToken = await exchangeCodeForToken(
+        input.code,
+        input.redirectUri
+      );
 
       // 2. Exchange for long-lived token (~60 days)
       const longToken = await exchangeForLongLivedToken(shortToken);
 
-      // 3. Subscribe WABA to our app's webhooks
-      await subscribeApp(input.wabaId, longToken);
+      // 3. Discover WABA and phone number if not provided
+      let wabaId = input.wabaId;
+      let phoneNumberId = input.phoneNumberId;
+      let displayPhone: string | undefined;
 
-      // 4. Register phone number for messaging
-      await registerPhoneNumber(input.phoneNumberId, longToken);
+      if (!wabaId || !phoneNumberId) {
+        const discovered = await discoverWhatsAppAccount(longToken);
+        wabaId = discovered.wabaId;
+        phoneNumberId = discovered.phoneNumberId;
+        displayPhone = discovered.displayPhoneNumber;
+      }
 
-      // 5. Get display phone number
-      const phoneInfo = await getPhoneNumber(input.phoneNumberId, longToken);
+      // 4. Subscribe WABA to our app's webhooks
+      await subscribeApp(wabaId, longToken);
 
-      // 6. Update business record
+      // 5. Register phone number for messaging
+      await registerPhoneNumber(phoneNumberId, longToken);
+
+      // 6. Get display phone number (if not from discovery)
+      if (!displayPhone) {
+        const phoneInfo = await getPhoneNumber(phoneNumberId, longToken);
+        displayPhone = phoneInfo.displayPhoneNumber;
+      }
+
+      // 7. Update business record
       await db
         .update(businesses)
         .set({
-          waPhoneId: input.phoneNumberId,
+          waPhoneId: phoneNumberId,
           waAccessToken: longToken,
-          waBusinessId: input.wabaId,
+          waBusinessId: wabaId,
           botActive: true,
           updatedAt: new Date(),
         })
@@ -264,7 +284,7 @@ export const settingsRouter = createTRPCRouter({
 
       return {
         success: true,
-        phoneNumber: phoneInfo.displayPhoneNumber,
+        phoneNumber: displayPhone,
       };
     }),
 });
