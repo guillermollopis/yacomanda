@@ -194,9 +194,11 @@ async function handleBillingEvent(event: Stripe.Event) {
 async function notifyPaymentReceived(order: {
   orderNumber: number;
   total: string | null;
-  customerId: string;
+  customerId: string | null;
   businessId: string;
 }) {
+  if (!order.customerId) return;
+
   const [customer] = await db
     .select({ phone: customers.phone })
     .from(customers)
