@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { orders, businesses, customers } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { sendTextMessage } from "@/lib/whatsapp/client";
+import { sendOwnerAdvanceButton } from "@/lib/whatsapp/message-sender";
 import type Stripe from "stripe";
 
 export async function POST(req: Request) {
@@ -68,10 +69,14 @@ async function handleConnectEvent(event: Stripe.Event) {
             businessId: orders.businessId,
           });
 
-        // Notify customer via WhatsApp (fire-and-forget)
         if (updatedOrder) {
+          // Notify customer via WhatsApp (fire-and-forget)
           notifyPaymentReceived(updatedOrder).catch((err) =>
             console.error("Failed to send payment notification:", err)
+          );
+          // Send owner the "preparing?" advance button (fire-and-forget)
+          notifyOwnerPaymentReceived(updatedOrder, orderId).catch((err) =>
+            console.error("Failed to notify owner of payment:", err)
           );
         }
       }
@@ -214,4 +219,25 @@ async function notifyPaymentReceived(order: {
     customer.phone,
     text
   );
+}
+
+/** Send owner the "preparing?" advance button after payment is confirmed */
+async function notifyOwnerPaymentReceived(
+  order: { orderNumber: number; businessId: string },
+  orderId: string
+) {
+  const [biz] = await db
+    .select({
+      name: businesses.name,
+      waPhoneId: businesses.waPhoneId,
+      waAccessToken: businesses.waAccessToken,
+      notificationPhone: businesses.notificationPhone,
+    })
+    .from(businesses)
+    .where(eq(businesses.id, order.businessId));
+
+  if (!biz?.waPhoneId || !biz?.waAccessToken || !biz?.notificationPhone) return;
+
+  const bizCtx = { name: biz.name, waPhoneId: biz.waPhoneId, waAccessToken: biz.waAccessToken };
+  await sendOwnerAdvanceButton(bizCtx, biz.notificationPhone, orderId, order.orderNumber, "confirmed");
 }

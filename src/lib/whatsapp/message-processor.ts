@@ -115,9 +115,16 @@ async function handleOwnerButtonReply(
     sendStatusNotification(bizCtx, order.customerPhone, order.orderNumber, "confirmed").catch((err) =>
       console.error("Failed to notify customer:", err)
     );
-    sendOwnerAdvanceButton(bizCtx, ownerPhone, orderId, order.orderNumber, "confirmed").catch((err) =>
-      console.error("Failed to send owner advance button:", err)
-    );
+    // If payment link exists but not paid, tell owner to wait for payment
+    if (order.paymentUrl && !order.paymentPaidAt) {
+      sendTextMessage(waOpts, ownerPhone, `Pedido #${order.orderNumber} aceptado. Esperando pago del cliente — te avisaremos cuando se confirme.`).catch((err) =>
+        console.error("Failed to send owner waiting message:", err)
+      );
+    } else {
+      sendOwnerAdvanceButton(bizCtx, ownerPhone, orderId, order.orderNumber, "confirmed").catch((err) =>
+        console.error("Failed to send owner advance button:", err)
+      );
+    }
   } else if (action === "owner_reject") {
     const updated = await updateOrderStatusById(orderId, "cancelled");
     if (!updated) return;
@@ -125,6 +132,11 @@ async function handleOwnerButtonReply(
       console.error("Failed to notify customer:", err)
     );
   } else if (action === "owner_preparing") {
+    // Block if payment link exists but not paid
+    if (order.paymentUrl && !order.paymentPaidAt) {
+      sendTextMessage(waOpts, ownerPhone, `Pedido #${order.orderNumber} tiene un pago pendiente. Se actualizará automáticamente cuando el cliente pague.`).catch(() => {});
+      return;
+    }
     const updated = await updateOrderStatusById(orderId, "preparing");
     if (!updated) return;
     sendStatusNotification(bizCtx, order.customerPhone, order.orderNumber, "preparing").catch((err) =>

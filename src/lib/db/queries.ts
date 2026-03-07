@@ -277,6 +277,9 @@ export async function getOrderWithCustomerPhone(orderId: string) {
       status: orders.status,
       deliveryType: orders.deliveryType,
       businessId: orders.businessId,
+      customerId: orders.customerId,
+      paymentUrl: orders.paymentUrl,
+      paymentPaidAt: orders.paymentPaidAt,
       customerPhone: customers.phone,
     })
     .from(orders)

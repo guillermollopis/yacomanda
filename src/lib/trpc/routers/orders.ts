@@ -136,7 +136,11 @@ export const ordersRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const [current] = await db
-        .select({ status: orders.status })
+        .select({
+          status: orders.status,
+          paymentUrl: orders.paymentUrl,
+          paymentPaidAt: orders.paymentPaidAt,
+        })
         .from(orders)
         .where(
           and(eq(orders.id, input.id), eq(orders.businessId, ctx.businessId))
@@ -154,6 +158,18 @@ export const ordersRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `No se puede cambiar de "${current.status}" a "${input.status}"`,
+        });
+      }
+
+      // Block advancing to "preparing" if online payment is pending
+      if (
+        input.status === "preparing" &&
+        current.paymentUrl &&
+        !current.paymentPaidAt
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Este pedido tiene un pago online pendiente. Se actualizará automáticamente cuando el cliente pague.",
         });
       }
 

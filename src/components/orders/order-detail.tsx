@@ -132,6 +132,8 @@ export function OrderDetail({ id }: { id: string }) {
   const action = NEXT_ACTION[order.status ?? "pending"];
   const items = (order.items as OrderItem[]) ?? [];
   const isTerminal = order.status === "completed" || order.status === "cancelled";
+  const paymentPending = !!order.paymentUrl && !order.paymentPaidAt;
+  const actionBlockedByPayment = paymentPending && action?.status === "preparing";
 
   return (
     <div className="space-y-6">
@@ -329,10 +331,15 @@ export function OrderDetail({ id }: { id: string }) {
                 <CardTitle className="text-sm">Acciones</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
+                {actionBlockedByPayment && (
+                  <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+                    Esperando pago online del cliente. Se desbloqueará automáticamente.
+                  </div>
+                )}
                 {action && (
                   <Button
                     className="w-full"
-                    disabled={updateStatus.isPending}
+                    disabled={updateStatus.isPending || actionBlockedByPayment}
                     onClick={() =>
                       updateStatus.mutate({ id, status: action.status })
                     }
