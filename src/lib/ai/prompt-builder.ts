@@ -16,6 +16,7 @@ interface BusinessForPrompt {
   type: string | null;
   address?: string | null;
   botTone?: string | null;
+  welcomeMessage?: string | null;
   deliveryEnabled?: boolean | null;
   pickupEnabled?: boolean | null;
   minPreparationMinutes?: number | null;
@@ -107,6 +108,7 @@ Tu trabajo es:
 2. Ayudarles a hacer pedidos del menú
 3. Aclarar dudas sobre productos, precios y alérgenos
 4. Confirmar los pedidos antes de procesarlos
+${business.welcomeMessage ? `\nMENSAJE DE BIENVENIDA: Cuando un cliente te escriba por primera vez o te salude, usa este mensaje como base para tu saludo (puedes adaptarlo ligeramente al contexto):\n"${business.welcomeMessage}"` : ""}
 
 MENÚ DISPONIBLE:
 ${catalogLines.length > 0 ? catalogLines.join("\n") : "(No hay productos disponibles en este momento)"}

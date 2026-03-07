@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Card,
   CardContent,
@@ -13,23 +14,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { BUSINESS_TYPES } from "@/config/constants";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Save } from "lucide-react";
+import { Save, Clock, Truck, Plus, Trash2 } from "lucide-react";
 
-const BUSINESS_TYPE_LABELS: Record<string, string> = {
-  restaurant: "Restaurante",
-  bar: "Bar",
-  cafe: "Cafetería",
-  bakery: "Panadería",
+const DAY_KEYS = [
+  "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+] as const;
+
+const DAY_LABELS: Record<string, string> = {
+  monday: "Lunes", tuesday: "Martes", wednesday: "Miércoles",
+  thursday: "Jueves", friday: "Viernes", saturday: "Sábado", sunday: "Domingo",
 };
+
+type TimeRange = { open: string; close: string };
+type WeekSchedule = Record<string, TimeRange[]>;
 
 export default function SettingsPage() {
   const { data, isLoading } = trpc.settings.getBusinessSettings.useQuery();
@@ -42,7 +40,13 @@ export default function SettingsPage() {
     address: "",
     city: "",
     postalCode: "",
+    minPreparationMinutes: 30,
+    deliveryEnabled: false,
+    pickupEnabled: true,
   });
+
+  const [schedule, setSchedule] = useState<WeekSchedule>({});
+  const [closedDays, setClosedDays] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (data) {
@@ -53,7 +57,23 @@ export default function SettingsPage() {
         address: data.address ?? "",
         city: data.city ?? "",
         postalCode: data.postalCode ?? "",
+        minPreparationMinutes: data.minPreparationMinutes ?? 30,
+        deliveryEnabled: data.deliveryEnabled ?? false,
+        pickupEnabled: data.pickupEnabled ?? true,
       });
+
+      const raw = (data.kitchenSchedule ?? {}) as Record<string, TimeRange | TimeRange[]>;
+      const normalized: WeekSchedule = {};
+      for (const [day, val] of Object.entries(raw)) {
+        normalized[day] = Array.isArray(val) ? val : [val];
+      }
+      setSchedule(normalized);
+
+      const closed: Record<string, boolean> = {};
+      for (const day of DAY_KEYS) {
+        closed[day] = !normalized[day];
+      }
+      setClosedDays(closed);
     }
   }, [data]);
 
@@ -67,6 +87,13 @@ export default function SettingsPage() {
   });
 
   function handleSave() {
+    const finalSchedule: WeekSchedule = {};
+    for (const day of DAY_KEYS) {
+      if (!closedDays[day] && schedule[day]?.length) {
+        finalSchedule[day] = schedule[day];
+      }
+    }
+
     updateMutation.mutate({
       name: form.name || undefined,
       phone: form.phone || undefined,
@@ -74,36 +101,26 @@ export default function SettingsPage() {
       address: form.address || undefined,
       city: form.city || undefined,
       postalCode: form.postalCode || undefined,
+      minPreparationMinutes: form.minPreparationMinutes,
+      deliveryEnabled: form.deliveryEnabled,
+      pickupEnabled: form.pickupEnabled,
+      kitchenSchedule: finalSchedule,
     });
   }
 
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-5 w-48" />
-            <Skeleton className="h-4 w-64" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Skeleton className="h-10 rounded-md" />
-              <Skeleton className="h-10 rounded-md" />
-            </div>
-            <Skeleton className="h-10 rounded-md" />
-            <Skeleton className="h-10 rounded-md" />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Skeleton className="h-10 rounded-md" />
-              <Skeleton className="h-10 rounded-md" />
-            </div>
-          </CardContent>
-        </Card>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-40 rounded-lg" />
+        ))}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Business info */}
       <Card>
         <CardHeader>
           <CardTitle>Información del negocio</CardTitle>
@@ -170,18 +187,190 @@ export default function SettingsPage() {
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="flex justify-end pt-2">
-            <Button
-              onClick={handleSave}
-              disabled={updateMutation.isPending}
-            >
-              <Save className="mr-2 size-4" />
-              {updateMutation.isPending ? "Guardando..." : "Guardar cambios"}
-            </Button>
+      {/* Business hours */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Clock className="size-5" />
+            <div>
+              <CardTitle>Horario</CardTitle>
+              <CardDescription>
+                Fuera de este horario, el bot avisará que estáis cerrados.
+                Puedes añadir varios turnos por día (ej: comidas y cenas).
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {Object.values(closedDays).every(Boolean) && (
+            <div className="rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
+              Todos los días están cerrados. El bot informará a los clientes de que estáis cerrados. Activa los días que abres.
+            </div>
+          )}
+          {DAY_KEYS.map((day) => {
+            const ranges = schedule[day] ?? [{ open: "09:00", close: "22:00" }];
+            return (
+              <div
+                key={day}
+                className="rounded-md border p-3 space-y-2"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-24 shrink-0">
+                    <span className="text-sm font-medium">{DAY_LABELS[day]}</span>
+                  </div>
+                  <Switch
+                    checked={!closedDays[day]}
+                    onCheckedChange={(checked) => {
+                      setClosedDays({ ...closedDays, [day]: !checked });
+                      if (checked && (!schedule[day] || schedule[day].length === 0)) {
+                        setSchedule({
+                          ...schedule,
+                          [day]: [{ open: "09:00", close: "22:00" }],
+                        });
+                      }
+                    }}
+                  />
+                  {closedDays[day] && (
+                    <span className="text-sm text-muted-foreground">Cerrado</span>
+                  )}
+                </div>
+                {!closedDays[day] && (
+                  <div className="ml-[calc(6rem+0.75rem)] space-y-1.5">
+                    {ranges.map((range, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          value={range.open}
+                          onChange={(e) => {
+                            const updated = [...ranges];
+                            updated[idx] = { ...updated[idx], open: e.target.value };
+                            setSchedule({ ...schedule, [day]: updated });
+                          }}
+                          className="w-28"
+                        />
+                        <span className="text-sm text-muted-foreground">a</span>
+                        <Input
+                          type="time"
+                          value={range.close}
+                          onChange={(e) => {
+                            const updated = [...ranges];
+                            updated[idx] = { ...updated[idx], close: e.target.value };
+                            setSchedule({ ...schedule, [day]: updated });
+                          }}
+                          className="w-28"
+                        />
+                        {ranges.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 shrink-0"
+                            onClick={() => {
+                              const updated = ranges.filter((_, i) => i !== idx);
+                              setSchedule({ ...schedule, [day]: updated });
+                            }}
+                          >
+                            <Trash2 className="size-3.5 text-muted-foreground" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs text-muted-foreground"
+                      onClick={() => {
+                        setSchedule({
+                          ...schedule,
+                          [day]: [...ranges, { open: "20:00", close: "00:00" }],
+                        });
+                      }}
+                    >
+                      <Plus className="mr-1 size-3" />
+                      Añadir turno
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      {/* Order configuration */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Truck className="size-5" />
+            <div>
+              <CardTitle>Pedidos</CardTitle>
+              <CardDescription>
+                Tiempos y tipos de entrega.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="prepTime">
+              Tiempo mínimo de preparación (minutos)
+            </Label>
+            <Input
+              id="prepTime"
+              type="number"
+              min={0}
+              max={240}
+              value={form.minPreparationMinutes}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  minPreparationMinutes: parseInt(e.target.value) || 0,
+                })
+              }
+              className="w-32"
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Recogida en local</Label>
+              <p className="text-xs text-muted-foreground">
+                Permitir pedidos para recoger.
+              </p>
+            </div>
+            <Switch
+              checked={form.pickupEnabled}
+              onCheckedChange={(checked) =>
+                setForm({ ...form, pickupEnabled: checked })
+              }
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Entrega a domicilio</Label>
+              <p className="text-xs text-muted-foreground">
+                Permitir pedidos con entrega.
+              </p>
+            </div>
+            <Switch
+              checked={form.deliveryEnabled}
+              onCheckedChange={(checked) =>
+                setForm({ ...form, deliveryEnabled: checked })
+              }
+            />
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSave} disabled={updateMutation.isPending}>
+          <Save className="mr-2 size-4" />
+          {updateMutation.isPending ? "Guardando..." : "Guardar cambios"}
+        </Button>
+      </div>
     </div>
   );
 }
