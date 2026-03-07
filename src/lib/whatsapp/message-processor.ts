@@ -544,7 +544,7 @@ export async function processInboundMessage(msg: ParsedMessage) {
   // null = never configured = 24/7, {} = all days closed, {monday: ...} = has schedule
   let closedInfo: { nextOpenTime?: string; allClosed?: boolean } | undefined;
   if (business.kitchenSchedule !== null && business.kitchenSchedule !== undefined) {
-    const schedule = business.kitchenSchedule as Record<string, { open: string; close: string }>;
+    const schedule = business.kitchenSchedule as Record<string, { open: string; close: string } | Array<{ open: string; close: string }>>;
     if (Object.keys(schedule).length === 0) {
       // All days explicitly closed — restaurant is fully closed
       closedInfo = { allClosed: true };

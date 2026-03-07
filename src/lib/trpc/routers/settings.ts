@@ -88,7 +88,10 @@ export const settingsRouter = createTRPCRouter({
         kitchenSchedule: z
           .record(
             z.string(),
-            z.object({ open: z.string(), close: z.string() })
+            z.union([
+              z.object({ open: z.string(), close: z.string() }),
+              z.array(z.object({ open: z.string(), close: z.string() })),
+            ])
           )
           .optional(),
         notificationPhone: z.string().max(20).optional(),

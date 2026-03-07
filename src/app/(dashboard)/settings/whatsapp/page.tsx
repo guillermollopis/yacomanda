@@ -25,7 +25,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { BOT_TONES } from "@/config/constants";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Save, CheckCircle2, Bot, Truck, Clock, BellRing, Wallet } from "lucide-react";
+import { Save, CheckCircle2, Bot, Truck, Clock, BellRing, Wallet, Plus, Trash2 } from "lucide-react";
 import { EmbeddedSignup } from "@/components/whatsapp/embedded-signup";
 
 const TONE_LABELS: Record<string, string> = {
@@ -54,8 +54,8 @@ const DAY_LABELS: Record<string, string> = {
   sunday: "Domingo",
 };
 
-type DaySchedule = { open: string; close: string };
-type WeekSchedule = Record<string, DaySchedule>;
+type TimeRange = { open: string; close: string };
+type WeekSchedule = Record<string, TimeRange[]>;
 
 export default function WhatsAppSettingsPage() {
   const { data, isLoading } = trpc.settings.getBusinessSettings.useQuery();
@@ -89,13 +89,18 @@ export default function WhatsAppSettingsPage() {
         bizumPhone: data.bizumPhone ?? "",
       });
 
-      const savedSchedule = (data.kitchenSchedule ?? {}) as WeekSchedule;
-      setSchedule(savedSchedule);
+      const raw = (data.kitchenSchedule ?? {}) as Record<string, TimeRange | TimeRange[]>;
+      // Normalize legacy single-range format to arrays
+      const normalized: WeekSchedule = {};
+      for (const [day, val] of Object.entries(raw)) {
+        normalized[day] = Array.isArray(val) ? val : [val];
+      }
+      setSchedule(normalized);
 
       // Compute closed days
       const closed: Record<string, boolean> = {};
       for (const day of DAY_KEYS) {
-        closed[day] = !savedSchedule[day];
+        closed[day] = !normalized[day];
       }
       setClosedDays(closed);
     }
@@ -113,7 +118,7 @@ export default function WhatsAppSettingsPage() {
     // Build final schedule excluding closed days
     const finalSchedule: WeekSchedule = {};
     for (const day of DAY_KEYS) {
-      if (!closedDays[day] && schedule[day]) {
+      if (!closedDays[day] && schedule[day]?.length) {
         finalSchedule[day] = schedule[day];
       }
     }
@@ -354,64 +359,92 @@ export default function WhatsAppSettingsPage() {
               Todos los días están cerrados. El bot informará a los clientes de que estáis cerrados. Activa los días que abres.
             </div>
           )}
-          {DAY_KEYS.map((day) => (
-            <div
-              key={day}
-              className="flex items-center gap-3 rounded-md border p-3"
-            >
-              <div className="w-24 shrink-0">
-                <span className="text-sm font-medium">{DAY_LABELS[day]}</span>
-              </div>
-              <Switch
-                checked={!closedDays[day]}
-                onCheckedChange={(checked) => {
-                  setClosedDays({ ...closedDays, [day]: !checked });
-                  if (checked && !schedule[day]) {
-                    setSchedule({
-                      ...schedule,
-                      [day]: { open: "09:00", close: "22:00" },
-                    });
-                  }
-                }}
-              />
-              {closedDays[day] ? (
-                <span className="text-sm text-muted-foreground">Cerrado</span>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="time"
-                    value={schedule[day]?.open ?? "09:00"}
-                    onChange={(e) =>
-                      setSchedule({
-                        ...schedule,
-                        [day]: {
-                          ...schedule[day],
-                          open: e.target.value,
-                          close: schedule[day]?.close ?? "22:00",
-                        },
-                      })
-                    }
-                    className="w-28"
+          {DAY_KEYS.map((day) => {
+            const ranges = schedule[day] ?? [{ open: "09:00", close: "22:00" }];
+            return (
+              <div
+                key={day}
+                className="rounded-md border p-3 space-y-2"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-24 shrink-0">
+                    <span className="text-sm font-medium">{DAY_LABELS[day]}</span>
+                  </div>
+                  <Switch
+                    checked={!closedDays[day]}
+                    onCheckedChange={(checked) => {
+                      setClosedDays({ ...closedDays, [day]: !checked });
+                      if (checked && (!schedule[day] || schedule[day].length === 0)) {
+                        setSchedule({
+                          ...schedule,
+                          [day]: [{ open: "09:00", close: "22:00" }],
+                        });
+                      }
+                    }}
                   />
-                  <span className="text-sm text-muted-foreground">a</span>
-                  <Input
-                    type="time"
-                    value={schedule[day]?.close ?? "22:00"}
-                    onChange={(e) =>
-                      setSchedule({
-                        ...schedule,
-                        [day]: {
-                          open: schedule[day]?.open ?? "09:00",
-                          close: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-28"
-                  />
+                  {closedDays[day] && (
+                    <span className="text-sm text-muted-foreground">Cerrado</span>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+                {!closedDays[day] && (
+                  <div className="ml-[calc(6rem+0.75rem)] space-y-1.5">
+                    {ranges.map((range, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          value={range.open}
+                          onChange={(e) => {
+                            const updated = [...ranges];
+                            updated[idx] = { ...updated[idx], open: e.target.value };
+                            setSchedule({ ...schedule, [day]: updated });
+                          }}
+                          className="w-28"
+                        />
+                        <span className="text-sm text-muted-foreground">a</span>
+                        <Input
+                          type="time"
+                          value={range.close}
+                          onChange={(e) => {
+                            const updated = [...ranges];
+                            updated[idx] = { ...updated[idx], close: e.target.value };
+                            setSchedule({ ...schedule, [day]: updated });
+                          }}
+                          className="w-28"
+                        />
+                        {ranges.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 shrink-0"
+                            onClick={() => {
+                              const updated = ranges.filter((_, i) => i !== idx);
+                              setSchedule({ ...schedule, [day]: updated });
+                            }}
+                          >
+                            <Trash2 className="size-3.5 text-muted-foreground" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs text-muted-foreground"
+                      onClick={() => {
+                        setSchedule({
+                          ...schedule,
+                          [day]: [...ranges, { open: "20:00", close: "00:00" }],
+                        });
+                      }}
+                    >
+                      <Plus className="mr-1 size-3" />
+                      Añadir turno
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 

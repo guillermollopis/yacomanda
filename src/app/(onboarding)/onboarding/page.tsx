@@ -743,8 +743,8 @@ const DAY_LABELS: Record<string, string> = {
   thursday: "Jueves", friday: "Viernes", saturday: "Sábado", sunday: "Domingo",
 };
 
-type DaySchedule = { open: string; close: string };
-type WeekSchedule = Record<string, DaySchedule>;
+type TimeRange = { open: string; close: string };
+type WeekSchedule = Record<string, TimeRange[]>;
 
 function Step5BotConfig({
   onNext,
@@ -761,11 +761,11 @@ function Step5BotConfig({
     minPreparationMinutes: 30,
   });
 
-  // Default schedule: Mon-Sun 09:00-22:00
+  // Default schedule: Mon-Sun single range 09:00-22:00
   const [schedule, setSchedule] = useState<WeekSchedule>(() => {
     const s: WeekSchedule = {};
     for (const day of DAY_KEYS) {
-      s[day] = { open: "09:00", close: "22:00" };
+      s[day] = [{ open: "09:00", close: "22:00" }];
     }
     return s;
   });
@@ -776,10 +776,27 @@ function Step5BotConfig({
     onError: (err) => toast.error(err.message),
   });
 
+  function updateRange(day: string, idx: number, field: "open" | "close", value: string) {
+    const ranges = [...(schedule[day] ?? [{ open: "09:00", close: "22:00" }])];
+    ranges[idx] = { ...ranges[idx], [field]: value };
+    setSchedule({ ...schedule, [day]: ranges });
+  }
+
+  function addRange(day: string) {
+    const ranges = [...(schedule[day] ?? [])];
+    ranges.push({ open: "20:00", close: "00:00" });
+    setSchedule({ ...schedule, [day]: ranges });
+  }
+
+  function removeRange(day: string, idx: number) {
+    const ranges = (schedule[day] ?? []).filter((_, i) => i !== idx);
+    setSchedule({ ...schedule, [day]: ranges.length > 0 ? ranges : [{ open: "09:00", close: "22:00" }] });
+  }
+
   function handleSave() {
     const finalSchedule: WeekSchedule = {};
     for (const day of DAY_KEYS) {
-      if (!closedDays[day] && schedule[day]) {
+      if (!closedDays[day] && schedule[day]?.length) {
         finalSchedule[day] = schedule[day];
       }
     }
@@ -861,65 +878,78 @@ function Step5BotConfig({
           </div>
           <p className="text-xs text-muted-foreground">
             Fuera de este horario, el bot avisará que estáis cerrados. Desactiva
-            los días que no abráis.
+            los días que no abráis. Puedes añadir varios turnos (ej: comidas y cenas).
           </p>
-          {DAY_KEYS.map((day) => (
-            <div
-              key={day}
-              className="flex items-center gap-3 rounded-md border p-2.5"
-            >
-              <div className="w-20 shrink-0">
-                <span className="text-sm font-medium">{DAY_LABELS[day]}</span>
-              </div>
-              <Switch
-                checked={!closedDays[day]}
-                onCheckedChange={(checked) => {
-                  setClosedDays({ ...closedDays, [day]: !checked });
-                  if (checked && !schedule[day]) {
-                    setSchedule({
-                      ...schedule,
-                      [day]: { open: "09:00", close: "22:00" },
-                    });
-                  }
-                }}
-              />
-              {closedDays[day] ? (
-                <span className="text-sm text-muted-foreground">Cerrado</span>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="time"
-                    value={schedule[day]?.open ?? "09:00"}
-                    onChange={(e) =>
-                      setSchedule({
-                        ...schedule,
-                        [day]: {
-                          open: e.target.value,
-                          close: schedule[day]?.close ?? "22:00",
-                        },
-                      })
-                    }
-                    className="w-28"
+          {DAY_KEYS.map((day) => {
+            const ranges = schedule[day] ?? [{ open: "09:00", close: "22:00" }];
+            return (
+              <div
+                key={day}
+                className="rounded-md border p-2.5 space-y-2"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-20 shrink-0">
+                    <span className="text-sm font-medium">{DAY_LABELS[day]}</span>
+                  </div>
+                  <Switch
+                    checked={!closedDays[day]}
+                    onCheckedChange={(checked) => {
+                      setClosedDays({ ...closedDays, [day]: !checked });
+                      if (checked && (!schedule[day] || schedule[day].length === 0)) {
+                        setSchedule({
+                          ...schedule,
+                          [day]: [{ open: "09:00", close: "22:00" }],
+                        });
+                      }
+                    }}
                   />
-                  <span className="text-sm text-muted-foreground">a</span>
-                  <Input
-                    type="time"
-                    value={schedule[day]?.close ?? "22:00"}
-                    onChange={(e) =>
-                      setSchedule({
-                        ...schedule,
-                        [day]: {
-                          open: schedule[day]?.open ?? "09:00",
-                          close: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-28"
-                  />
+                  {closedDays[day] && (
+                    <span className="text-sm text-muted-foreground">Cerrado</span>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+                {!closedDays[day] && (
+                  <div className="ml-[calc(5rem+0.75rem)] space-y-1.5">
+                    {ranges.map((range, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          value={range.open}
+                          onChange={(e) => updateRange(day, idx, "open", e.target.value)}
+                          className="w-28"
+                        />
+                        <span className="text-sm text-muted-foreground">a</span>
+                        <Input
+                          type="time"
+                          value={range.close}
+                          onChange={(e) => updateRange(day, idx, "close", e.target.value)}
+                          className="w-28"
+                        />
+                        {ranges.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 shrink-0"
+                            onClick={() => removeRange(day, idx)}
+                          >
+                            <Trash2 className="size-3.5 text-muted-foreground" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs text-muted-foreground"
+                      onClick={() => addRange(day)}
+                    >
+                      <Plus className="mr-1 size-3" />
+                      Añadir turno
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex items-center justify-between pt-2">
