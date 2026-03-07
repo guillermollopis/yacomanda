@@ -26,6 +26,7 @@ export const settingsRouter = createTRPCRouter({
         name: businesses.name,
         plan: businesses.plan,
         subscriptionStatus: businesses.subscriptionStatus,
+        trialEndsAt: businesses.trialEndsAt,
       })
       .from(businesses)
       .where(eq(businesses.id, ctx.businessId));
@@ -66,7 +67,6 @@ export const settingsRouter = createTRPCRouter({
       pickupEnabled: biz.pickupEnabled,
       kitchenSchedule: biz.kitchenSchedule,
       notificationPhone: biz.notificationPhone,
-      bizumPhone: biz.bizumPhone,
     };
   }),
 
@@ -95,7 +95,6 @@ export const settingsRouter = createTRPCRouter({
           )
           .optional(),
         notificationPhone: z.string().max(20).optional(),
-        bizumPhone: z.string().max(20).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -111,10 +110,6 @@ export const settingsRouter = createTRPCRouter({
       if (data.notificationPhone) {
         data.notificationPhone = data.notificationPhone.replace(/[\s\-()]/g, "");
       }
-      if (data.bizumPhone) {
-        data.bizumPhone = data.bizumPhone.replace(/[\s\-()]/g, "");
-      }
-
       const [updated] = await db
         .update(businesses)
         .set(data)

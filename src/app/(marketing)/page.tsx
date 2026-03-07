@@ -415,8 +415,8 @@ export default function LandingPage() {
           <div className="mt-14 grid gap-6 md:grid-cols-3">
             {[
               {
-                title: "Prueba gratis 14 dias",
-                text: "Configura tu restaurante, prueba el bot con tus clientes y decide si te convence. Sin tarjeta de credito, sin letra pequeña.",
+                title: "Prueba gratis 30 días",
+                text: "Configura tu restaurante, prueba el bot con tus clientes y decide si te convence. 50 pedidos incluidos, sin tarjeta de crédito.",
                 icon: "🎯",
                 color: "bg-green-50 border-green-200",
               },
@@ -474,7 +474,7 @@ export default function LandingPage() {
                 price: "29",
                 highlight: false,
                 features: [
-                  "Hasta 500 pedidos/mes",
+                  "500 pedidos/mes",
                   "Bot IA en WhatsApp",
                   "Panel de gestion",
                   "Cobro con tarjeta y efectivo",
@@ -629,7 +629,7 @@ export default function LandingPage() {
             </Link>
           </div>
           <p className="mt-6 text-sm text-slate-500">
-            Sin tarjeta de credito &middot; Configuracion en 15 min &middot; Soporte en espanol
+            30 dias gratis &middot; Sin tarjeta de credito &middot; Configuracion en 15 min
           </p>
         </div>
       </section>

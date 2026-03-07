@@ -54,8 +54,28 @@ export function Sidebar() {
           );
         })}
       </nav>
-      {showUpgrade && (
-        <div className="p-4">
+      <div className="p-4 space-y-3">
+        {billing && (
+          <div className="rounded-lg bg-white/5 px-3 py-2.5">
+            <div className="flex justify-between text-[11px] text-slate-400 mb-1.5">
+              <span>{billing.monthlyOrderCount ?? 0} pedidos</span>
+              <span>de {billing.monthlyOrderLimit ?? 50}</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-white/10">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  ((billing.monthlyOrderCount ?? 0) / (billing.monthlyOrderLimit ?? 50)) * 100 > 90
+                    ? "bg-red-500"
+                    : ((billing.monthlyOrderCount ?? 0) / (billing.monthlyOrderLimit ?? 50)) * 100 > 70
+                      ? "bg-yellow-500"
+                      : "bg-green-500"
+                }`}
+                style={{ width: `${Math.min(((billing.monthlyOrderCount ?? 0) / (billing.monthlyOrderLimit ?? 50)) * 100, 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
+        {showUpgrade && (
           <Link
             href="/billing"
             className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-green-900/30 transition-transform hover:scale-[1.02]"
@@ -68,8 +88,8 @@ export function Sidebar() {
               </div>
             </div>
           </Link>
-        </div>
-      )}
+        )}
+      </div>
     </aside>
   );
 }

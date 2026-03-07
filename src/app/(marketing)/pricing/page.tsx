@@ -25,7 +25,7 @@ const plans = [
     description: "Para restaurantes que empiezan con pedidos online",
     highlight: false,
     features: [
-      "Hasta 500 pedidos/mes",
+      "500 pedidos/mes",
       "Bot IA en WhatsApp",
       "Panel de gestion",
       "Cobro con tarjeta y efectivo",

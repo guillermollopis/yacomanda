@@ -530,6 +530,24 @@ export async function processInboundMessage(msg: ParsedMessage) {
   // 8. Check if bot is active
   if (!business.botActive) return;
 
+  // 8b. Check trial expiration
+  if (
+    business.subscriptionStatus === "trial" &&
+    business.trialEndsAt &&
+    new Date(business.trialEndsAt) < new Date()
+  ) {
+    const text = `¡Hola! El periodo de prueba de ${business.name} ha finalizado. Por favor, contacta directamente con el establecimiento.`;
+    await sendTextMessage(waOpts, msg.from, text);
+    await saveMessage({
+      conversationId: conversation.id,
+      businessId: business.id,
+      direction: "outbound",
+      messageType: "text",
+      content: text,
+    });
+    return;
+  }
+
   // 9. Check if conversation is escalated — message is already saved, just don't auto-reply
   if (conversation.status === "escalated") {
     // Message was already saved in step 6 — staff will see it in the conversations inbox

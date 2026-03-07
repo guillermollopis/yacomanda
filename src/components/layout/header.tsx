@@ -16,6 +16,13 @@ const planColors: Record<string, string> = {
   negocio: "bg-amber-100 text-amber-700",
 };
 
+function getTrialLabel(trialEndsAt: string | Date | null | undefined, status: string | null | undefined): string | null {
+  if (status !== "trial" || !trialEndsAt) return null;
+  const days = Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86400000));
+  if (days === 0) return "Prueba expirada";
+  return `${days}d prueba`;
+}
+
 export function DashboardHeader() {
   const { data } = trpc.settings.getBusinessHeader.useQuery(undefined, {
     staleTime: 5 * 60 * 1000,
@@ -33,9 +40,13 @@ export function DashboardHeader() {
             <Link href="/billing">
               <Badge
                 variant="secondary"
-                className={`cursor-pointer hover:opacity-80 ${planColors[data.plan ?? "esencial"] ?? planColors.esencial}`}
+                className={`cursor-pointer hover:opacity-80 ${
+                  data.subscriptionStatus === "trial"
+                    ? "bg-blue-100 text-blue-700"
+                    : planColors[data.plan ?? "esencial"] ?? planColors.esencial
+                }`}
               >
-                {data.plan ?? "esencial"}
+                {getTrialLabel(data.trialEndsAt, data.subscriptionStatus) ?? data.plan ?? "esencial"}
               </Badge>
             </Link>
           </div>

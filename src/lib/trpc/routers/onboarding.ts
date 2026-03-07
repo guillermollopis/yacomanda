@@ -114,6 +114,9 @@ export const onboardingRouter = createTRPCRouter({
         "-" +
         Date.now().toString(36);
 
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 30);
+
       const [biz] = await db
         .insert(businesses)
         .values({
@@ -123,6 +126,7 @@ export const onboardingRouter = createTRPCRouter({
           city: input.city,
           phone: input.phone,
           notificationPhone: input.notificationPhone?.replace(/[\s\-()]/g, ""),
+          trialEndsAt,
         })
         .returning();
 

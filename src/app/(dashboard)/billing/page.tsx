@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalLink, Check } from "lucide-react";
 
 const PLAN_LABELS: Record<string, string> = {
-  trial: "Prueba gratuita",
+  trial: "Prueba gratuita (30 días)",
   esencial: "Esencial",
   profesional: "Profesional",
   negocio: "Negocio",
@@ -185,7 +185,7 @@ export default function BillingPage() {
           <div>
             <h2 className="text-lg font-semibold">Elige tu plan</h2>
             <p className="text-sm text-muted-foreground">
-              Todos los planes incluyen 14 días de prueba gratis.
+              Empieza con 30 días de prueba gratis (50 pedidos). Elige un plan para crecer sin límites.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">

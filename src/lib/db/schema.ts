@@ -55,7 +55,7 @@ export const businesses = pgTable(
 
     // Plan & billing
     plan: text().default("esencial"),
-    monthlyOrderLimit: integer("monthly_order_limit").default(500),
+    monthlyOrderLimit: integer("monthly_order_limit").default(50),
     monthlyOrderCount: integer("monthly_order_count").default(0),
     setupFeePaid: boolean("setup_fee_paid").default(false),
     subscriptionStatus: text("subscription_status").default("trial"),
