@@ -80,9 +80,14 @@ export async function findOrCreateConversation(
     .limit(1);
 
   if (existing[0]) {
+    const updates: Record<string, unknown> = { lastMessageAt: new Date() };
+    // Reopen closed conversations when a new message arrives
+    if (existing[0].status === "closed") {
+      updates.status = "active";
+    }
     const [updated] = await db
       .update(conversations)
-      .set({ lastMessageAt: new Date() })
+      .set(updates)
       .where(eq(conversations.id, existing[0].id))
       .returning();
     return updated;

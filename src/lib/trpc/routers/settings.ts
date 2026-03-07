@@ -9,7 +9,7 @@ import {
   getConnectAccountStatus,
 } from "@/lib/payments/connect";
 import { createBillingPortalSession, createCheckoutSession } from "@/lib/payments/billing";
-import { BOT_TONES, DELIVERY_TYPES } from "@/config/constants";
+import { BOT_TONES } from "@/config/constants";
 import {
   exchangeCodeForToken,
   exchangeForLongLivedToken,
@@ -103,9 +103,18 @@ export const settingsRouter = createTRPCRouter({
         });
       }
 
+      // Clean phone fields — strip spaces/dashes for consistent storage
+      const data = { ...input, updatedAt: new Date() };
+      if (data.notificationPhone) {
+        data.notificationPhone = data.notificationPhone.replace(/[\s\-()]/g, "");
+      }
+      if (data.bizumPhone) {
+        data.bizumPhone = data.bizumPhone.replace(/[\s\-()]/g, "");
+      }
+
       const [updated] = await db
         .update(businesses)
-        .set({ ...input, updatedAt: new Date() })
+        .set(data)
         .where(eq(businesses.id, ctx.businessId))
         .returning();
 

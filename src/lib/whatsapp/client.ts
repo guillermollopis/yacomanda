@@ -61,17 +61,21 @@ async function waFetch(
 
 // --- Send messages ---
 
+const WA_TEXT_MAX = 4096;
+const WA_INTERACTIVE_BODY_MAX = 1024;
+
 export async function sendTextMessage(
   opts: WaApiOptions,
   to: string,
   text: string
 ) {
   await checkRateLimit(opts.phoneNumberId);
+  const body = text.length > WA_TEXT_MAX ? text.slice(0, WA_TEXT_MAX - 3) + "..." : text;
   return waFetch("/messages", opts, {
     messaging_product: "whatsapp",
     to,
     type: "text",
-    text: { body: text },
+    text: { body },
   });
 }
 
@@ -101,6 +105,11 @@ export async function sendInteractiveMessage(
   interactive: unknown
 ) {
   await checkRateLimit(opts.phoneNumberId);
+  // Truncate body text if it exceeds WhatsApp interactive limit
+  const msg = interactive as { body?: { text?: string } };
+  if (msg?.body?.text && msg.body.text.length > WA_INTERACTIVE_BODY_MAX) {
+    msg.body.text = msg.body.text.slice(0, WA_INTERACTIVE_BODY_MAX - 3) + "...";
+  }
   return waFetch("/messages", opts, {
     messaging_product: "whatsapp",
     to,

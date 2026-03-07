@@ -7,7 +7,9 @@
  *   "tuesday":   { "open": "09:00", "close": "22:00" },
  *   ...
  * }
- * Missing day = closed that day. Empty object {} = always open (backward-compatible).
+ * Missing day = closed that day.
+ * NOTE: Empty object {} is intercepted by message-processor as "all days closed"
+ * before reaching isBusinessOpen(). If it does reach here, treat as open (legacy).
  */
 
 const DAY_NAMES = [

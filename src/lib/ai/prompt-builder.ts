@@ -37,6 +37,7 @@ interface LastOrderForPrompt {
 
 interface ClosedInfo {
   nextOpenTime?: string;
+  allClosed?: boolean;
 }
 
 export function buildSystemPrompt(
@@ -114,7 +115,11 @@ MODALIDADES: ${deliveryModes || "recogida"}
 ${business.minPreparationMinutes ? `TIEMPO MÍNIMO DE PREPARACIÓN: ${business.minPreparationMinutes} minutos` : ""}
 ${deliveryInstructions}
 ${repeatContext}
-${closedInfo ? `
+${closedInfo?.allClosed ? `
+ESTADO ACTUAL: EL NEGOCIO ESTÁ CERRADO TEMPORALMENTE.
+- Informa amablemente al cliente de que el negocio está cerrado temporalmente.
+- NO aceptes pedidos. Si el cliente quiere pedir, dile que no es posible en este momento.
+- Sugiere que vuelva a intentarlo más adelante.` : closedInfo ? `
 ESTADO ACTUAL: EL NEGOCIO ESTÁ CERRADO AHORA.${closedInfo.nextOpenTime ? ` Próxima apertura: ${closedInfo.nextOpenTime}.` : ""}
 - Informa amablemente al cliente de que estáis cerrados.
 - PUEDES tomar pedidos igualmente. Dile que el pedido se preparará en cuanto abráis.

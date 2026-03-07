@@ -43,8 +43,31 @@ import type { WaApiOptions } from "./client";
 
 // --- Phone normalization ---
 
+/**
+ * Normalize phone to digits-only for comparison.
+ * WhatsApp `from` field is always digits with country code (e.g. "34612345678").
+ * User input may be "+34 612 345 678", "612345678", "34612345678", etc.
+ */
 function normalizePhone(phone: string): string {
-  return phone.replace(/[\s\-+]/g, "");
+  return phone.replace(/[\s\-+()]/g, "");
+}
+
+/**
+ * Compare two phone numbers, handling the case where one might be missing
+ * the country code. Returns true if they match.
+ */
+function phonesMatch(phone1: string, phone2: string): boolean {
+  const a = normalizePhone(phone1);
+  const b = normalizePhone(phone2);
+  if (a === b) return true;
+  // One might have country code, the other might not
+  // e.g. "34612345678" vs "612345678"
+  if (a.endsWith(b) || b.endsWith(a)) {
+    // Only match if the shorter one is at least 9 digits (a real phone number)
+    const shorter = a.length < b.length ? a : b;
+    return shorter.length >= 9;
+  }
+  return false;
 }
 
 // --- Owner button reply handler ---
@@ -133,6 +156,10 @@ async function handleButtonReply(
   if (!orderId) return;
 
   if (action === "confirm_order") {
+    // Guard: only confirm if still pending_confirmation
+    const existing = await db.select({ status: orders.status }).from(orders).where(eq(orders.id, orderId)).limit(1);
+    if (existing[0]?.status !== "pending_confirmation") return;
+
     const updated = await updateOrderStatusById(orderId, "pending");
     if (!updated) return;
 
@@ -170,7 +197,7 @@ async function handleButtonReply(
 
       // Bizum first (zero fees)
       if (hasBizum) {
-        payLines.push(`\n*Bizum* (sin comisiones): envia ${updated.total}\u20ac al ${business.bizumPhone}\nUna vez enviado, manda aqui el comprobante o captura de pantalla.`);
+        payLines.push(`\n*Bizum* (sin comisiones): envía ${updated.total}€ al ${business.bizumPhone}\nUna vez enviado, manda aquí el comprobante o captura de pantalla.`);
       }
 
       // Stripe card payment (optional)
@@ -228,15 +255,11 @@ async function handleButtonReply(
       }).catch((err) => console.error("Failed to notify owner:", err));
     }
 
-    // Save outbound message record
-    await saveMessage({
-      conversationId: conversation.id,
-      businessId: business.id,
-      direction: "outbound",
-      messageType: "text",
-      content: `Pedido #${updated.orderNumber} confirmado por el cliente.`,
-    });
   } else if (action === "cancel_order") {
+    // Guard: only cancel if still pending_confirmation
+    const existingForCancel = await db.select({ status: orders.status }).from(orders).where(eq(orders.id, orderId)).limit(1);
+    if (existingForCancel[0]?.status !== "pending_confirmation") return;
+
     await updateOrderStatusById(orderId, "cancelled");
 
     const text = "Pedido cancelado. Si necesitas algo más, ¡dinos!";
@@ -413,9 +436,7 @@ export async function processInboundMessage(msg: ParsedMessage) {
 
   // 2. Check if sender is the owner (notification phone)
   if (business.notificationPhone) {
-    const normalizedOwner = normalizePhone(business.notificationPhone);
-    const normalizedSender = normalizePhone(msg.from);
-    if (normalizedOwner === normalizedSender) {
+    if (phonesMatch(msg.from, business.notificationPhone)) {
       // Owner message — handle button replies, ignore everything else
       if (msg.buttonReplyId) {
         markAsRead(waOpts, msg.messageId).catch((err) =>
@@ -521,12 +542,12 @@ export async function processInboundMessage(msg: ParsedMessage) {
 
   // 10. Check business hours (pass info to AI instead of blocking)
   // null = never configured = 24/7, {} = all days closed, {monday: ...} = has schedule
-  let closedInfo: { nextOpenTime?: string } | undefined;
+  let closedInfo: { nextOpenTime?: string; allClosed?: boolean } | undefined;
   if (business.kitchenSchedule !== null && business.kitchenSchedule !== undefined) {
     const schedule = business.kitchenSchedule as Record<string, { open: string; close: string }>;
     if (Object.keys(schedule).length === 0) {
-      // All days explicitly closed
-      closedInfo = {};
+      // All days explicitly closed — restaurant is fully closed
+      closedInfo = { allClosed: true };
     } else {
       const { open, nextOpenTime } = isBusinessOpen(
         schedule,
@@ -550,8 +571,12 @@ export async function processInboundMessage(msg: ParsedMessage) {
   let aiConfidence: string | undefined;
 
   if (hasAiKey && content) {
-    // Full AI flow
-    const history = await getConversationHistory(conversation.id, 10);
+    // Full AI flow — fetch 11 to drop the just-saved inbound message (last in chronological order)
+    const rawHistory = await getConversationHistory(conversation.id, 11);
+    // Remove the current message (already saved) to avoid duplicating it as userMessage
+    const history = rawHistory.length > 0 && rawHistory[rawHistory.length - 1].waMessageId === msg.messageId
+      ? rawHistory.slice(0, -1)
+      : rawHistory.slice(0, 10);
     const catalog = await getCatalogItems(biz.id);
 
     // Fetch last order for repeat ordering
@@ -563,7 +588,7 @@ export async function processInboundMessage(msg: ParsedMessage) {
     aiConfidence = result.confidence?.toString();
 
     // Handle different AI response types
-    if (result.type === "order") {
+    if (result.type === "order" && !closedInfo?.allClosed) {
       const deliveryType = result.deliveryType;
       const deliveryAddr = result.deliveryAddress;
       responseText = await handleOrderIntent(

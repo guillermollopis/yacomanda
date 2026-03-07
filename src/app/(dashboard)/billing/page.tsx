@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -12,7 +13,7 @@ import {
 import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, Check, Sparkles } from "lucide-react";
+import { ExternalLink, Check } from "lucide-react";
 
 const PLAN_LABELS: Record<string, string> = {
   trial: "Prueba gratuita",
@@ -55,6 +56,7 @@ const PLANS = [
 
 export default function BillingPage() {
   const { data, isLoading } = trpc.settings.getBillingStatus.useQuery();
+  const [clickedPlan, setClickedPlan] = useState<string | null>(null);
 
   const portalMutation = trpc.settings.createPortalLink.useMutation({
     onSuccess: (res) => {
@@ -67,7 +69,7 @@ export default function BillingPage() {
     onSuccess: (res) => {
       window.location.href = res.url;
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => { toast.error(err.message); setClickedPlan(null); },
   });
 
   if (isLoading) {
@@ -89,7 +91,9 @@ export default function BillingPage() {
   const limitOrders = data?.monthlyOrderLimit ?? 500;
   const usagePercent = Math.min((usedOrders / limitOrders) * 100, 100);
   const statusConfig = STATUS_LABELS[status] ?? STATUS_LABELS.trial;
-  const canUpgrade = plan === "trial" || status !== "active";
+  const planOrder = ["esencial", "profesional", "negocio"];
+  const currentPlanIndex = planOrder.indexOf(plan);
+  const canUpgrade = status !== "active" || currentPlanIndex < planOrder.length - 1;
 
   return (
     <div className="space-y-6">
@@ -186,7 +190,10 @@ export default function BillingPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {PLANS.map((p) => {
-              const isCurrent = p.id === plan;
+              const isCurrent = p.id === plan && status === "active";
+              const pIndex = planOrder.indexOf(p.id);
+              const isDowngrade = status === "active" && pIndex <= currentPlanIndex;
+              const isLoading = clickedPlan === p.id && checkoutMutation.isPending;
               return (
                 <Card
                   key={p.id}
@@ -217,14 +224,19 @@ export default function BillingPage() {
                     <Button
                       className="w-full"
                       variant={p.popular ? "default" : "outline"}
-                      disabled={isCurrent || checkoutMutation.isPending}
-                      onClick={() => checkoutMutation.mutate({ plan: p.id })}
+                      disabled={isCurrent || isDowngrade || checkoutMutation.isPending}
+                      onClick={() => {
+                        setClickedPlan(p.id);
+                        checkoutMutation.mutate({ plan: p.id });
+                      }}
                     >
                       {isCurrent
                         ? "Plan actual"
-                        : checkoutMutation.isPending
-                          ? "Redirigiendo..."
-                          : "Elegir plan"}
+                        : isDowngrade
+                          ? "Plan actual o inferior"
+                          : isLoading
+                            ? "Redirigiendo..."
+                            : "Elegir plan"}
                     </Button>
                   </CardContent>
                 </Card>

@@ -28,6 +28,7 @@ export type ParsedItem = z.infer<typeof parsedItemSchema>;
 interface HistoryMessage {
   direction: string;
   content: string | null;
+  messageType?: string;
 }
 
 // --- Provider interface ---
@@ -81,7 +82,7 @@ function getAnthropicProvider(): LLMProvider | null {
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1024,
-      system: systemPrompt,
+      system: systemPrompt + "\n\nIMPORTANT: Respond ONLY with valid JSON. No markdown, no code fences, no extra text.",
       messages,
     });
     const block = response.content[0];
@@ -151,10 +152,14 @@ export async function parseOrder(
   }
 
   // Build conversation messages from history + current
+  // Skip non-conversational outbound messages (order summaries, payment links, status notifications)
   const llmMessages: Array<{ role: "user" | "assistant"; content: string }> =
     [];
   for (const msg of history) {
     if (!msg.content) continue;
+    // Skip system-generated outbound messages that aren't AI conversation
+    if (msg.direction === "outbound" && msg.messageType === "interactive") continue;
+    if (msg.direction === "outbound" && msg.content.startsWith("*Pago del pedido")) continue;
     llmMessages.push({
       role: msg.direction === "inbound" ? "user" : "assistant",
       content: msg.content,

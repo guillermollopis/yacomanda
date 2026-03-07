@@ -67,8 +67,8 @@ export async function createPaymentLink({
         },
       ],
       metadata: { orderId },
-      success_url: `${APP_URL}/orders/${orderId}?paid=true`,
-      cancel_url: `${APP_URL}/orders/${orderId}?cancelled=true`,
+      success_url: `${APP_URL}/payment/success?order=${orderNumber}`,
+      cancel_url: `${APP_URL}/payment/cancelled?order=${orderNumber}`,
     },
     { stripeAccount: stripeAccountId }
   );

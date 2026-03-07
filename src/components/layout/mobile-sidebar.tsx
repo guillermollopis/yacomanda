@@ -27,7 +27,7 @@ export function MobileSidebar() {
 
   const allItems = isAdmin ? [...navItems, ...adminNavItems] : navItems;
   const showUpgrade =
-    billing?.plan === "trial" || billing?.subscriptionStatus !== "active";
+    billing && billing.subscriptionStatus !== "active" && billing.plan !== "negocio";
 
   return (
     <>

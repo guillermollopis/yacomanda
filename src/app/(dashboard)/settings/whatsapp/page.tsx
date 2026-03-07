@@ -228,7 +228,7 @@ export default function WhatsAppSettingsPage() {
             />
             <p className="text-xs text-muted-foreground">
               Debe ser un número diferente al de tu negocio. Usa tu número
-              personal.
+              personal con prefijo del país (ej: +34).
             </p>
           </div>
         </CardContent>

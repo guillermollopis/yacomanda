@@ -84,7 +84,7 @@ export default function LandingPage() {
                     <div key={i} className={`size-7 rounded-full border-2 border-slate-900 ${c}`} />
                   ))}
                 </div>
-                <span>500+ restaurantes ya confian en YaComanda</span>
+                <span>Prueba gratuita &middot; Sin tarjeta &middot; 5 min setup</span>
               </div>
             </div>
 

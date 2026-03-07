@@ -13,7 +13,7 @@ const isClerkConfigured =
 const planColors: Record<string, string> = {
   esencial: "bg-primary/10 text-primary",
   profesional: "bg-purple-100 text-purple-700",
-  premium: "bg-amber-100 text-amber-700",
+  negocio: "bg-amber-100 text-amber-700",
 };
 
 export function DashboardHeader() {
