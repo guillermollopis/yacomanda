@@ -351,7 +351,7 @@ export default function LandingPage() {
               {
                 icon: CreditCard,
                 title: "Cobro automatico",
-                desc: "Bizum y tarjeta integrados. El cliente paga sin salir de WhatsApp.",
+                desc: "Pago con tarjeta online o en local. Confirmación automática sin capturas.",
                 color: "text-amber-400",
                 bg: "bg-amber-500/10",
                 span: "",
@@ -477,7 +477,7 @@ export default function LandingPage() {
                   "Hasta 500 pedidos/mes",
                   "Bot IA en WhatsApp",
                   "Panel de gestion",
-                  "Cobro con Bizum y tarjeta",
+                  "Cobro con tarjeta y efectivo",
                 ],
               },
               {

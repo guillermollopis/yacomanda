@@ -45,7 +45,10 @@ import {
   Phone,
   MapPin,
   Clock,
+  CreditCard,
+  Banknote,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 type OrderItem = {
   name: string;
@@ -232,6 +235,52 @@ export function OrderDetail({ id }: { id: string }) {
                   <Phone className="size-4 text-muted-foreground" />
                   <span>{order.customerPhone}</span>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Payment */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Pago</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {order.paymentPaidAt ? (
+                <div className="flex items-center gap-2">
+                  <CreditCard className="size-4 text-green-600" />
+                  <span className="font-medium text-green-700">Pagado con tarjeta</span>
+                  <Badge variant="outline" className="ml-auto bg-green-50 text-green-700 border-green-200 text-xs">
+                    Pagado
+                  </Badge>
+                </div>
+              ) : order.paymentUrl ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="size-4 text-amber-600" />
+                    <span className="text-amber-700">Pendiente de pago</span>
+                    <Badge variant="outline" className="ml-auto bg-amber-50 text-amber-700 border-amber-200 text-xs">
+                      Pendiente
+                    </Badge>
+                  </div>
+                  <a
+                    href={order.paymentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary underline"
+                  >
+                    Ver enlace de pago
+                  </a>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Banknote className="size-4 text-muted-foreground" />
+                  <span>Pago en local</span>
+                </div>
+              )}
+              {order.paymentPaidAt && (
+                <p className="text-xs text-muted-foreground">
+                  {new Date(order.paymentPaidAt).toLocaleString("es-ES")}
+                </p>
               )}
             </CardContent>
           </Card>

@@ -25,15 +25,15 @@ export const metadata: Metadata = {
     template: "%s | YaComanda",
   },
   description:
-    "Automatiza los pedidos de tu restaurante por WhatsApp con inteligencia artificial. Sin comisiones. Sin Glovo. Cobra con Bizum. Listo en 15 minutos.",
+    "Automatiza los pedidos de tu restaurante por WhatsApp con inteligencia artificial. Sin comisiones. Sin Glovo. Pago con tarjeta o en local. Listo en 15 minutos.",
   keywords: [
     "pedidos whatsapp",
     "restaurante",
     "automatizar pedidos",
-    "bizum",
     "bot whatsapp",
     "ia restaurante",
     "yacomanda",
+    "pago online restaurante",
   ],
   openGraph: {
     type: "website",
@@ -41,13 +41,13 @@ export const metadata: Metadata = {
     siteName: "YaComanda",
     title: "YaComanda — Pedidos por WhatsApp con IA",
     description:
-      "Automatiza los pedidos de tu restaurante por WhatsApp con IA. Sin comisiones. Cobra con Bizum y tarjeta.",
+      "Automatiza los pedidos de tu restaurante por WhatsApp con IA. Sin comisiones. Pago con tarjeta o en local.",
   },
   twitter: {
     card: "summary_large_image",
     title: "YaComanda — Pedidos por WhatsApp con IA",
     description:
-      "Automatiza los pedidos de tu restaurante por WhatsApp con IA. Sin comisiones. Cobra con Bizum y tarjeta.",
+      "Automatiza los pedidos de tu restaurante por WhatsApp con IA. Sin comisiones. Pago con tarjeta o en local.",
   },
   robots: {
     index: true,

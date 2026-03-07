@@ -7,7 +7,7 @@ import { orders, customers, businesses } from "@/lib/db/schema";
 import { sendStatusNotification } from "@/lib/whatsapp/message-sender";
 import { saveMessage } from "@/lib/db/queries";
 
-const ACTIVE_STATUSES = ["pending_confirmation", "pending", "confirmed", "payment_sent", "paid", "preparing", "ready"];
+const ACTIVE_STATUSES = ["pending_confirmation", "pending", "confirmed", "paid", "preparing", "ready"];
 const TERMINAL_STATUSES = ["completed", "cancelled"];
 const PENDING_EXPIRY_MINUTES = 15;
 
@@ -15,7 +15,6 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   pending_confirmation: ["pending", "cancelled"],
   pending: ["confirmed", "cancelled"],
   confirmed: ["preparing", "cancelled"],
-  payment_sent: ["paid", "cancelled"],
   paid: ["preparing", "cancelled"],
   preparing: ["ready", "cancelled"],
   ready: ["completed", "cancelled"],

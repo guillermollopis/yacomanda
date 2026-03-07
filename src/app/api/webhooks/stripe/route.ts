@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/payments/stripe";
 import { getServerEnv } from "@/config/env";
 import { db } from "@/lib/db";
-import { orders, businesses } from "@/lib/db/schema";
+import { orders, businesses, customers } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { sendTextMessage } from "@/lib/whatsapp/client";
 import type Stripe from "stripe";
 
 export async function POST(req: Request) {
@@ -50,15 +51,29 @@ async function handleConnectEvent(event: Stripe.Event) {
       const session = event.data.object as Stripe.Checkout.Session;
       const orderId = session.metadata?.orderId;
       if (orderId) {
-        await db
+        const [updatedOrder] = await db
           .update(orders)
           .set({
             status: "paid",
+            paymentMethod: "card",
             paymentPaidAt: new Date(),
             paymentId: session.payment_intent as string,
             updatedAt: new Date(),
           })
-          .where(eq(orders.id, orderId));
+          .where(eq(orders.id, orderId))
+          .returning({
+            orderNumber: orders.orderNumber,
+            total: orders.total,
+            customerId: orders.customerId,
+            businessId: orders.businessId,
+          });
+
+        // Notify customer via WhatsApp (fire-and-forget)
+        if (updatedOrder) {
+          notifyPaymentReceived(updatedOrder).catch((err) =>
+            console.error("Failed to send payment notification:", err)
+          );
+        }
       }
       break;
     }
@@ -168,4 +183,35 @@ async function handleBillingEvent(event: Stripe.Event) {
       break;
     }
   }
+}
+
+/** Send WhatsApp message to customer confirming payment received */
+async function notifyPaymentReceived(order: {
+  orderNumber: number;
+  total: string | null;
+  customerId: string;
+  businessId: string;
+}) {
+  const [customer] = await db
+    .select({ phone: customers.phone })
+    .from(customers)
+    .where(eq(customers.id, order.customerId));
+
+  const [biz] = await db
+    .select({
+      name: businesses.name,
+      waPhoneId: businesses.waPhoneId,
+      waAccessToken: businesses.waAccessToken,
+    })
+    .from(businesses)
+    .where(eq(businesses.id, order.businessId));
+
+  if (!customer?.phone || !biz?.waPhoneId || !biz?.waAccessToken) return;
+
+  const text = `Pago de ${order.total}\u20ac recibido para el pedido #${order.orderNumber}. ¡Gracias!`;
+  await sendTextMessage(
+    { phoneNumberId: biz.waPhoneId, accessToken: biz.waAccessToken },
+    customer.phone,
+    text
+  );
 }

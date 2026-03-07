@@ -8,7 +8,6 @@ export const ORDER_STATUSES = [
   "pending_confirmation",
   "pending",
   "confirmed",
-  "payment_sent",
   "paid",
   "preparing",
   "ready",

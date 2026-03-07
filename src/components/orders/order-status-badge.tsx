@@ -18,15 +18,10 @@ const STATUS_CONFIG: Record<string, { label: string; className: string; dot: str
     className: "bg-blue-100 text-blue-800 border-blue-200",
     dot: "bg-blue-500",
   },
-  payment_sent: {
-    label: "Pago enviado",
-    className: "bg-blue-100 text-blue-800 border-blue-200",
-    dot: "bg-blue-500",
-  },
   paid: {
     label: "Pagado",
-    className: "bg-orange-100 text-orange-800 border-orange-200",
-    dot: "bg-orange-500",
+    className: "bg-green-100 text-green-800 border-green-200",
+    dot: "bg-green-500",
   },
   preparing: {
     label: "Preparando",

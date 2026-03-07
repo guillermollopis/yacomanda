@@ -36,7 +36,7 @@ const faqs = [
   {
     question: "¿Cuanto cuesta procesar pagos online?",
     answer:
-      "YaComanda no cobra comisiones por pedido. Los pagos online pasan por Stripe, que cobra 1,5% + 0,25€ por transaccion (tarifa estandar europea). Si tus clientes pagan en efectivo o Bizum directo, no hay ningun coste adicional mas alla de tu plan mensual.",
+      "YaComanda no cobra comisiones por pedido. Los pagos online con tarjeta pasan por Stripe, que cobra 1,5% + 0,25€ por transaccion (tarifa estandar europea). Si tus clientes pagan en efectivo al recoger, no hay ningun coste adicional mas alla de tu plan mensual.",
   },
   {
     question: "¿Hay periodo de prueba gratuito?",

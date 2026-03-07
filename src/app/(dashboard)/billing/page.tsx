@@ -35,7 +35,7 @@ const PLANS = [
     name: "Esencial",
     price: "29",
     orders: "500",
-    features: ["Bot IA WhatsApp", "Panel de gestión", "Cobro Bizum + tarjeta", "Gestión de carta"],
+    features: ["Bot IA WhatsApp", "Panel de gestión", "Cobro tarjeta + efectivo", "Gestión de carta"],
   },
   {
     id: "profesional" as const,

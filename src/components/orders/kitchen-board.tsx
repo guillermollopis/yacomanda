@@ -35,7 +35,7 @@ type LiveOrder = {
 
 // Column bucket definitions
 const NEW_STATUSES = ["pending_confirmation", "pending"];
-const PREPARING_STATUSES = ["confirmed", "payment_sent", "paid", "preparing"];
+const PREPARING_STATUSES = ["confirmed", "paid", "preparing"];
 const READY_STATUSES = ["ready"];
 
 export function KitchenBoard() {

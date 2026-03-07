@@ -645,87 +645,49 @@ function Step4Payments({
   onNext: () => void;
   onBack: () => void;
 }) {
-  const [bizumPhone, setBizumPhone] = useState("");
-  const updateMutation = trpc.settings.updateBusinessSettings.useMutation({
-    onSuccess: () => onNext(),
-    onError: (err) => toast.error(err.message),
-  });
-
-  function handleNext() {
-    if (bizumPhone.trim()) {
-      updateMutation.mutate({ bizumPhone: bizumPhone.trim() });
-    } else {
-      onNext();
-    }
-  }
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Cobros a clientes</CardTitle>
         <CardDescription>
-          Configura como quieres que tus clientes paguen sus pedidos. Sin
-          comisiones.
+          Tus clientes pueden pagar con tarjeta o en efectivo al recoger.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-2">
           <p className="text-sm font-medium text-green-900">
-            Bizum — sin comisiones
+            Efectivo — sin configurar nada
           </p>
           <p className="text-sm text-green-700">
-            Tus clientes reciben tu numero de Bizum al confirmar el pedido y te
-            pagan directamente. El dinero llega a tu cuenta al instante, sin
-            intermediarios ni comisiones.
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="onb-bizum">Tu numero de Bizum</Label>
-          <Input
-            id="onb-bizum"
-            value={bizumPhone}
-            onChange={(e) => setBizumPhone(e.target.value)}
-            placeholder="+34 600 123 456"
-            className="max-w-xs"
-          />
-          <p className="text-xs text-muted-foreground">
-            Normalmente es tu numero de movil. Puedes cambiarlo en Ajustes mas
-            tarde.
+            Por defecto, tus clientes pagan en efectivo o con tarjeta al recoger
+            su pedido. No hace falta configurar nada.
           </p>
         </div>
 
         <div className="rounded-lg border p-4 space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">
-            Otras opciones (configurables en Ajustes)
+          <p className="text-sm font-medium">
+            Pago online con tarjeta (opcional)
           </p>
-          <ul className="text-xs text-muted-foreground space-y-1">
-            <li>
-              <strong>Tarjeta</strong> — Conecta Stripe en Ajustes &gt; Pagos
-              (comision Stripe ~1.5%)
-            </li>
-            <li>
-              <strong>Efectivo</strong> — Siempre disponible, el cliente paga al
-              recoger
-            </li>
-          </ul>
+          <p className="text-sm text-muted-foreground">
+            Conecta Stripe en Ajustes &gt; Pagos para que tus clientes reciban
+            un enlace de pago con tarjeta junto a la confirmación del pedido.
+            El pago se verifica automáticamente — sin capturas ni comprobantes.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Comisión Stripe: ~1,5% + 0,25€ por transacción. Puedes configurarlo
+            después del onboarding.
+          </p>
         </div>
 
         <div className="flex justify-between pt-2">
           <Button variant="outline" onClick={onBack}>
             <ArrowLeft className="mr-2 size-4" />
-            Atras
+            Atrás
           </Button>
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={onNext}>
-              <SkipForward className="mr-2 size-4" />
-              Saltar
-            </Button>
-            <Button onClick={handleNext} disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? "Guardando..." : "Siguiente"}
-              <ArrowRight className="ml-2 size-4" />
-            </Button>
-          </div>
+          <Button onClick={onNext}>
+            Siguiente
+            <ArrowRight className="ml-2 size-4" />
+          </Button>
         </div>
       </CardContent>
     </Card>

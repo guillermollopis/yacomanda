@@ -146,7 +146,7 @@ async function handleOwnerButtonReply(
 
 async function handleButtonReply(
   msg: ParsedMessage,
-  business: { id: string; waPhoneId: string; waAccessToken: string; name: string; notificationPhone: string | null; stripeAccountId: string | null; currency: string | null; bizumPhone: string | null },
+  business: { id: string; waPhoneId: string; waAccessToken: string; name: string; notificationPhone: string | null; stripeAccountId: string | null; currency: string | null },
   customer: { id: string },
   conversation: { id: string },
   waOpts: WaApiOptions
@@ -186,57 +186,41 @@ async function handleButtonReply(
       }
     );
 
-    // Send payment options
-    const hasBizum = !!business.bizumPhone;
+    // Send payment info
     const hasStripe = !!business.stripeAccountId;
     const totalAmount = parseFloat(updated.total ?? "0");
 
-    if ((hasBizum || hasStripe) && totalAmount > 0) {
-      const payLines: string[] = [];
-      payLines.push(`*Pago del pedido #${updated.orderNumber} (${updated.total}\u20ac):*`);
+    if (hasStripe && totalAmount > 0) {
+      // Online payment available — send Stripe link + cash fallback
+      try {
+        const { url } = await createPaymentLink({
+          stripeAccountId: business.stripeAccountId!,
+          amount: totalAmount,
+          currency: business.currency ?? "eur",
+          orderNumber: updated.orderNumber,
+          orderId,
+        });
 
-      // Bizum first (zero fees)
-      if (hasBizum) {
-        payLines.push(`\n*Bizum* (sin comisiones): envía ${updated.total}€ al ${business.bizumPhone}\nUna vez enviado, manda aquí el comprobante o captura de pantalla.`);
-      }
+        if (url) {
+          await db
+            .update(orders)
+            .set({ paymentUrl: url })
+            .where(eq(orders.id, orderId));
 
-      // Stripe card payment (optional)
-      if (hasStripe) {
-        try {
-          const { url } = await createPaymentLink({
-            stripeAccountId: business.stripeAccountId!,
-            amount: totalAmount,
-            currency: business.currency ?? "eur",
-            orderNumber: updated.orderNumber,
-            orderId,
+          const payText = `*Pago del pedido #${updated.orderNumber} (${updated.total}\u20ac):*\n\nPaga con tarjeta: ${url}\n\nTambién puedes pagar en efectivo al recoger.`;
+          await sendTextMessage(waOpts, msg.from, payText);
+
+          await saveMessage({
+            conversationId: conversation.id,
+            businessId: business.id,
+            direction: "outbound",
+            messageType: "text",
+            content: payText,
           });
-
-          if (url) {
-            await db
-              .update(orders)
-              .set({ paymentUrl: url })
-              .where(eq(orders.id, orderId));
-
-            payLines.push(`\n*Tarjeta*: ${url}`);
-          }
-        } catch (err) {
-          console.error("Failed to create payment link:", err);
         }
+      } catch (err) {
+        console.error("Failed to create payment link:", err);
       }
-
-      // Cash option
-      payLines.push(`\n*Efectivo*: paga al recoger tu pedido`);
-
-      const payText = payLines.join("\n");
-      await sendTextMessage(waOpts, msg.from, payText);
-
-      await saveMessage({
-        conversationId: conversation.id,
-        businessId: business.id,
-        direction: "outbound",
-        messageType: "text",
-        content: payText,
-      });
     }
 
     // Notify owner via WhatsApp (fire-and-forget)
