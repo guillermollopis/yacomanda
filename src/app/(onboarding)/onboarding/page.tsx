@@ -41,7 +41,9 @@ import {
   Download,
   Smartphone,
   Share,
+  Clock,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { MenuImport } from "@/components/catalog/menu-import";
 import { EmbeddedSignup } from "@/components/whatsapp/embedded-signup";
 
@@ -326,7 +328,7 @@ function Step1BasicInfo({
           />
           <p className="text-xs text-muted-foreground">
             Recibirás los pedidos nuevos en este WhatsApp con botones para
-            aceptar o rechazar. Opcional.
+            aceptar o rechazar. Incluye el prefijo del país (+34). Opcional.
           </p>
         </div>
 
@@ -732,6 +734,18 @@ function Step4Payments({
 
 // ==================== STEP 5: Bot Config ====================
 
+const DAY_KEYS = [
+  "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+] as const;
+
+const DAY_LABELS: Record<string, string> = {
+  monday: "Lunes", tuesday: "Martes", wednesday: "Miércoles",
+  thursday: "Jueves", friday: "Viernes", saturday: "Sábado", sunday: "Domingo",
+};
+
+type DaySchedule = { open: string; close: string };
+type WeekSchedule = Record<string, DaySchedule>;
+
 function Step5BotConfig({
   onNext,
   onBack,
@@ -747,10 +761,36 @@ function Step5BotConfig({
     minPreparationMinutes: 30,
   });
 
+  // Default schedule: Mon-Sun 09:00-22:00
+  const [schedule, setSchedule] = useState<WeekSchedule>(() => {
+    const s: WeekSchedule = {};
+    for (const day of DAY_KEYS) {
+      s[day] = { open: "09:00", close: "22:00" };
+    }
+    return s;
+  });
+  const [closedDays, setClosedDays] = useState<Record<string, boolean>>({});
+
   const updateMutation = trpc.onboarding.updateBotConfig.useMutation({
     onSuccess: () => onNext(),
     onError: (err) => toast.error(err.message),
   });
+
+  function handleSave() {
+    const finalSchedule: WeekSchedule = {};
+    for (const day of DAY_KEYS) {
+      if (!closedDays[day] && schedule[day]) {
+        finalSchedule[day] = schedule[day];
+      }
+    }
+
+    updateMutation.mutate({
+      botTone: form.botTone as (typeof BOT_TONES)[number],
+      welcomeMessage: form.welcomeMessage || undefined,
+      minPreparationMinutes: form.minPreparationMinutes,
+      kitchenSchedule: finalSchedule,
+    });
+  }
 
   return (
     <Card>
@@ -760,7 +800,7 @@ function Step5BotConfig({
           Configura cómo se comunicará el bot con tus clientes.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
         <div className="space-y-2">
           <Label>Tono del bot</Label>
           <Select
@@ -813,6 +853,75 @@ function Step5BotConfig({
           />
         </div>
 
+        {/* Kitchen schedule */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Clock className="size-4 text-muted-foreground" />
+            <Label>Horario de cocina</Label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Fuera de este horario, el bot avisará que estáis cerrados. Desactiva
+            los días que no abráis.
+          </p>
+          {DAY_KEYS.map((day) => (
+            <div
+              key={day}
+              className="flex items-center gap-3 rounded-md border p-2.5"
+            >
+              <div className="w-20 shrink-0">
+                <span className="text-sm font-medium">{DAY_LABELS[day]}</span>
+              </div>
+              <Switch
+                checked={!closedDays[day]}
+                onCheckedChange={(checked) => {
+                  setClosedDays({ ...closedDays, [day]: !checked });
+                  if (checked && !schedule[day]) {
+                    setSchedule({
+                      ...schedule,
+                      [day]: { open: "09:00", close: "22:00" },
+                    });
+                  }
+                }}
+              />
+              {closedDays[day] ? (
+                <span className="text-sm text-muted-foreground">Cerrado</span>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="time"
+                    value={schedule[day]?.open ?? "09:00"}
+                    onChange={(e) =>
+                      setSchedule({
+                        ...schedule,
+                        [day]: {
+                          open: e.target.value,
+                          close: schedule[day]?.close ?? "22:00",
+                        },
+                      })
+                    }
+                    className="w-28"
+                  />
+                  <span className="text-sm text-muted-foreground">a</span>
+                  <Input
+                    type="time"
+                    value={schedule[day]?.close ?? "22:00"}
+                    onChange={(e) =>
+                      setSchedule({
+                        ...schedule,
+                        [day]: {
+                          open: schedule[day]?.open ?? "09:00",
+                          close: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-28"
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
         <div className="flex items-center justify-between pt-2">
           <Button variant="outline" onClick={onBack}>
             <ArrowLeft className="mr-2 size-4" />
@@ -824,13 +933,7 @@ function Step5BotConfig({
               Omitir
             </Button>
             <Button
-              onClick={() =>
-                updateMutation.mutate({
-                  botTone: form.botTone as (typeof BOT_TONES)[number],
-                  welcomeMessage: form.welcomeMessage || undefined,
-                  minPreparationMinutes: form.minPreparationMinutes,
-                })
-              }
+              onClick={handleSave}
               disabled={updateMutation.isPending}
             >
               {updateMutation.isPending ? "Guardando..." : "Siguiente"}

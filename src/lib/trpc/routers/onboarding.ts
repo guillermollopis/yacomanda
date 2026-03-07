@@ -122,7 +122,7 @@ export const onboardingRouter = createTRPCRouter({
           type: input.type,
           city: input.city,
           phone: input.phone,
-          notificationPhone: input.notificationPhone,
+          notificationPhone: input.notificationPhone?.replace(/[\s\-()]/g, ""),
         })
         .returning();
 
@@ -169,6 +169,10 @@ export const onboardingRouter = createTRPCRouter({
         botTone: z.enum(BOT_TONES),
         welcomeMessage: z.string().max(500).optional(),
         minPreparationMinutes: z.number().min(0).max(240).optional(),
+        kitchenSchedule: z.record(
+          z.string(),
+          z.object({ open: z.string(), close: z.string() })
+        ).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
