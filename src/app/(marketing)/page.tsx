@@ -79,11 +79,6 @@ export default function LandingPage() {
 
               {/* Mini trust */}
               <div className="mt-8 flex items-center gap-3 text-sm text-slate-500">
-                <div className="flex -space-x-2">
-                  {["bg-amber-400","bg-green-400","bg-blue-400","bg-rose-400"].map((c, i) => (
-                    <div key={i} className={`size-7 rounded-full border-2 border-slate-900 ${c}`} />
-                  ))}
-                </div>
                 <span>Prueba gratuita &middot; Sin tarjeta &middot; 5 min setup</span>
               </div>
             </div>
@@ -153,7 +148,7 @@ export default function LandingPage() {
             { value: "0%", label: "Comisiones por pedido", icon: Shield },
             { value: "24/7", label: "Bot activo sin descanso", icon: Users },
             { value: "~30%", label: "Ahorro vs plataformas", icon: TrendingUp },
-            { value: "<15min", label: "Tiempo de setup", icon: Zap },
+            { value: "100%", label: "Subvencionable con Kit Digital", icon: Zap },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
               <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-xl bg-green-50">
