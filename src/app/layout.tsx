@@ -39,10 +39,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "es_ES",
+    url: "https://yacomanda.com",
     siteName: "YaComanda",
     title: "YaComanda — Pedidos por WhatsApp con IA",
     description:
       "Automatiza los pedidos de tu restaurante por WhatsApp con IA. Sin comisiones. Pago con tarjeta o en local.",
+  },
+  facebook: {
+    appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "",
   },
   twitter: {
     card: "summary_large_image",
