@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Check, X, Minus } from "lucide-react";
+import { BlogPostingJsonLd } from "@/components/marketing/json-ld";
 
 export const metadata: Metadata = {
   title:
@@ -17,6 +18,13 @@ export const metadata: Metadata = {
 
 export default function Post() {
   return (
+    <>
+    <BlogPostingJsonLd
+      title="5 alternativas a Glovo sin comisiones para restaurantes en 2026"
+      description="Comparativa honesta de las mejores alternativas a Glovo para restaurantes."
+      slug="alternativas-glovo-sin-comisiones"
+      datePublished="2026-03-09"
+    />
     <article className="px-4 pb-24 pt-32 md:pt-40">
       <div className="mx-auto max-w-2xl">
         <Link
@@ -322,5 +330,6 @@ export default function Post() {
         </div>
       </div>
     </article>
+    </>
   );
 }

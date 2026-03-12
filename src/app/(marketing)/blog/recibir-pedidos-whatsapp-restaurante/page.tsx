@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { BlogPostingJsonLd } from "@/components/marketing/json-ld";
 
 export const metadata: Metadata = {
   title:
@@ -18,6 +19,13 @@ export const metadata: Metadata = {
 
 export default function Post() {
   return (
+    <>
+    <BlogPostingJsonLd
+      title="Como recibir pedidos por WhatsApp en tu restaurante: guia completa 2026"
+      description="Guia paso a paso para automatizar pedidos por WhatsApp en tu restaurante."
+      slug="recibir-pedidos-whatsapp-restaurante"
+      datePublished="2026-03-09"
+    />
     <article className="px-4 pb-24 pt-32 md:pt-40">
       <div className="mx-auto max-w-2xl">
         <Link
@@ -268,5 +276,6 @@ export default function Post() {
         </div>
       </div>
     </article>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { BlogPostingJsonLd } from "@/components/marketing/json-ld";
 
 export const metadata: Metadata = {
   title:
@@ -17,6 +18,13 @@ export const metadata: Metadata = {
 
 export default function Post() {
   return (
+    <>
+    <BlogPostingJsonLd
+      title="Comisiones de Glovo, Uber Eats y Just Eat: cuanto paga tu restaurante"
+      description="Desglosamos las comisiones reales de Glovo (hasta 35%), Uber Eats y Just Eat en 2026."
+      slug="comisiones-glovo-restaurantes"
+      datePublished="2026-03-09"
+    />
     <article className="px-4 pb-24 pt-32 md:pt-40">
       <div className="mx-auto max-w-2xl">
         <Link
@@ -238,5 +246,6 @@ export default function Post() {
         </div>
       </div>
     </article>
+    </>
   );
 }

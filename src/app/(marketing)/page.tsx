@@ -19,11 +19,20 @@ import {
   BarChart3,
   Users,
 } from "lucide-react";
-import { FaqSection } from "@/components/marketing/faq-section";
+import { FaqSection, faqs } from "@/components/marketing/faq-section";
+import {
+  OrganizationJsonLd,
+  SoftwareApplicationJsonLd,
+  FaqPageJsonLd,
+} from "@/components/marketing/json-ld";
 
 export default function LandingPage() {
   return (
     <>
+      <OrganizationJsonLd />
+      <SoftwareApplicationJsonLd />
+      <FaqPageJsonLd items={faqs} />
+
       {/* ============================================
           HERO — Animated mesh gradient + noise
           ============================================ */}
