@@ -19,7 +19,8 @@ import {
   BarChart3,
   Users,
 } from "lucide-react";
-import { FaqSection, faqs } from "@/components/marketing/faq-section";
+import { FaqSection } from "@/components/marketing/faq-section";
+import { faqs } from "@/components/marketing/faq-data";
 import {
   OrganizationJsonLd,
   SoftwareApplicationJsonLd,
