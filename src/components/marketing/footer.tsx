@@ -47,6 +47,11 @@ export function MarketingFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/kit-digital" className="text-slate-500 transition-colors hover:text-green-400">
+                  Kit Digital
+                </Link>
+              </li>
+              <li>
                 <Link href="/sign-up" className="text-slate-500 transition-colors hover:text-green-400">
                   Empezar gratis
                 </Link>

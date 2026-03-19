@@ -1,0 +1,333 @@
+# YaComanda — Documentacion completa para LLMs
+
+> YaComanda es un sistema de pedidos por WhatsApp con inteligencia artificial para restaurantes en Espana. Los clientes hacen sus pedidos por WhatsApp, la IA los entiende y confirma, y el restaurante solo tiene que cocinar. Sin comisiones por pedido. Tarifa plana mensual.
+
+> YaComanda is an AI-powered WhatsApp ordering system for restaurants in Spain. Customers order via WhatsApp, AI understands and confirms, and the restaurant just cooks. No per-order commissions. Flat monthly fee.
+
+## Informacion general
+
+- Producto: YaComanda
+- Web: https://www.yacomanda.com
+- Contacto: hola@yacomanda.com
+- Idioma principal: Espanol
+- Mercado objetivo: Restaurantes, bares, cafeterias, pizzerias, comida para llevar y cualquier negocio de hosteleria en Espana
+- Modelo de negocio: SaaS B2B, suscripcion mensual con tarifa plana
+- Sede: Espana
+
+---
+
+## Como funciona — Flujo completo
+
+### Perspectiva del cliente (usuario final)
+
+1. **El cliente escribe por WhatsApp**: Envia un mensaje al numero del restaurante con lo que quiere pedir. Puede usar texto libre ("quiero 2 pizzas margarita y una coca cola"), nota de voz o incluso una foto.
+2. **La IA interpreta el pedido**: El bot de IA analiza el mensaje, lo cruza con la carta del restaurante y genera un resumen del pedido con precios, IVA incluido.
+3. **Confirmacion con botones**: El cliente recibe un resumen del pedido con botones interactivos de WhatsApp: "Confirmar" o "Cancelar". Sin descargar apps, sin crear cuentas.
+4. **Pago**: Si el restaurante tiene cobro online activado, se envia un enlace de pago (Stripe). Tambien puede pagar en efectivo o Bizum al recoger.
+5. **Notificaciones de estado**: El cliente recibe mensajes automaticos por WhatsApp cuando su pedido cambia de estado: confirmado, preparando, listo para recoger/entregado.
+
+### Perspectiva del restaurante
+
+1. **Configuracion inicial**: El restaurante se registra, sube su carta (manualmente o con una foto que la IA lee automaticamente) y conecta su numero de WhatsApp Business.
+2. **Recepcion de pedidos**: Los pedidos llegan al panel web en tiempo real. Suena una alarma y aparece una notificacion del navegador. Opcionalmente, el propietario recibe un WhatsApp con botones para aceptar o rechazar.
+3. **Pantalla de cocina (KDS)**: Los pedidos aparecen en un tablero kanban con tres columnas: Pendiente, Preparando, Listo. Un toque para avanzar el estado. Modo pantalla completa para montar un monitor en cocina.
+4. **Notificacion al cliente**: Cuando el pedido cambia de estado, el cliente recibe una notificacion automatica por WhatsApp.
+5. **Gestion del dia a dia**: Desde el panel se gestionan carta, pedidos, clientes, equipo, analiticas y configuracion.
+
+---
+
+## Funcionalidades detalladas
+
+### Bot IA en WhatsApp
+- Procesamiento de lenguaje natural en espanol y cualquier otro idioma (deteccion automatica)
+- Entiende texto libre, notas de voz (transcripcion con Whisper) y fotos
+- Cruza lo que pide el cliente con la carta del restaurante usando matching inteligente
+- Genera resumen con precios y botones interactivos de WhatsApp (Confirmar / Cancelar)
+- Tono configurable: formal, informal, divertido
+- Mensaje de bienvenida personalizable
+- Horario de cocina configurable (el bot informa si el restaurante esta cerrado)
+- Escalado automatico a humano si la IA no esta segura
+- Soporte para pedidos de recogida y delivery (pide direccion automaticamente)
+- Posibilidad de repetir el ultimo pedido
+- Funciona 24/7 sin intervencion humana
+
+### Panel de gestion (Dashboard)
+- Responsive y PWA (instalable como app en movil)
+- KPIs del dia: pedidos, ingresos, ticket medio, comparativa con ayer
+- Alertas de pedidos pendientes y limites de uso
+- Guia de configuracion para nuevos negocios
+- Titulo del navegador con contador de pedidos pendientes
+
+### Gestion de carta (Catalogo)
+- Alta manual de productos con nombre, descripcion, precio, categoria
+- Variantes (tamanos, extras) como JSON flexible
+- Alergenos
+- Toggle de disponibilidad (activar/desactivar sin borrar)
+- Importacion de carta por foto: la IA (vision con Groq/Llama) extrae los items automaticamente
+- Flujo de revision antes de guardar los items importados
+
+### Pedidos
+- Lista de pedidos con filtros por estado y paginacion
+- Detalle de pedido con items, precios, datos del cliente
+- Transiciones de estado controladas (pending_confirmation → confirmed → preparing → ready → delivered/picked_up)
+- Notificacion automatica al cliente por WhatsApp en cada cambio de estado
+- Numeracion secuencial por restaurante
+
+### Pantalla de cocina (KDS — Kitchen Display System)
+- Tablero kanban: Pendiente | Preparando | Listo
+- Tarjetas de pedido con items, tiempo transcurrido y urgencia por colores (gris < 10 min, ambar 10-20 min, rojo > 20 min)
+- Avance de estado con un solo toque
+- Modo pantalla completa
+- Alarma sonora repetitiva (cada 30 segundos) para pedidos nuevos
+- Polling rapido (10 segundos)
+
+### Notificaciones al propietario por WhatsApp
+- El propietario recibe un WhatsApp con el resumen del pedido y botones: Aceptar / Rechazar
+- Tras aceptar: boton para marcar como "Preparando" y luego "Listo"
+- Deteccion automatica del propietario por numero de telefono
+
+### Clientes (CRM basico)
+- Lista de clientes con busqueda y paginacion
+- Detalle con historial de pedidos y conversaciones
+- Notas internas editables
+- Estadisticas por cliente (pedidos totales, gasto total)
+- Exportacion CSV (compatible con Excel, con BOM para acentos)
+- Cumplimiento RGPD: exportacion completa de datos del cliente
+
+### Conversaciones (Inbox)
+- Vista tipo WhatsApp Web: panel dividido con lista y chat
+- Burbujas de mensaje (entrante/saliente)
+- Respuesta manual desde el panel (envia por WhatsApp al cliente)
+- Indicador de estado: activa, escalada, cerrada
+- Filtro por estado
+- Boton para devolver al bot o cerrar conversacion
+- Polling rapido (5 segundos)
+
+### Analiticas
+- Pedidos por dia (grafico de lineas)
+- Ingresos por dia (grafico de barras)
+- Productos mas vendidos (barras horizontales)
+- Horas punta (grafico de barras)
+- Clientes nuevos vs recurrentes (grafico circular)
+- Filtro por rango de fechas
+- Comparativa con dia anterior en KPIs
+
+### Gestion de equipo
+- Invitar miembros por email
+- Roles: owner, admin, staff
+- Cambiar rol o eliminar miembros
+
+### Configuracion
+- Datos del negocio: nombre, telefono, email, direccion, ciudad, codigo postal
+- Configuracion de WhatsApp: estado de conexion, tono del bot, mensaje de bienvenida, toggle activo/inactivo
+- Tiempo de preparacion
+- Modos de entrega: recogida, delivery
+- Horario de cocina: 7 dias, hora de apertura y cierre, toggle cerrado
+- Telefono de notificaciones al propietario
+- Pagos: conexion con Stripe Connect
+- Facturacion: portal de Stripe Billing
+
+### PWA (Progressive Web App)
+- Manifest con iconos y shortcuts (Pedidos, Cocina, Chat)
+- Service worker: cache-first para estaticos, network-first para navegacion
+- Banner de instalacion con instrucciones para iOS
+- Funciona offline para la navegacion basica
+
+### Onboarding
+- Wizard de 6 pasos: info basica, instrucciones WhatsApp, carta (foto o manual), pagos, configuracion del bot, activacion
+- Pasos opcionales se pueden saltar
+- Animacion de confetti al completar
+- Sugerencia de instalar PWA al terminar
+
+---
+
+## Integraciones tecnicas
+
+- **WhatsApp Business API (Meta Cloud API)**: Envio y recepcion de mensajes, botones interactivos, verificacion de webhook con HMAC-SHA256
+- **Stripe**: Stripe Connect para cobros del restaurante, Stripe Billing para la suscripcion de YaComanda, Payment Links para cobro a clientes
+- **IA / LLM**: Groq (Llama 3.3 70B, primario) → Anthropic Claude (fallback) → OpenAI GPT (fallback). Cadena de fallback automatica.
+- **Vision IA**: Groq con Llama 4 Scout para extraer carta de fotos de menu
+- **Whisper (OpenAI)**: Transcripcion de notas de voz, deteccion automatica de idioma
+- **Cloudflare R2**: Almacenamiento de media (fotos, audios) via API compatible con S3
+- **Upstash Redis**: Rate limiting (80 mensajes/segundo), deduplicacion de webhooks (24h), cache
+- **Clerk**: Autenticacion de usuarios del dashboard
+- **Neon**: Base de datos PostgreSQL serverless
+- **Drizzle ORM**: ORM type-safe para PostgreSQL
+
+### Stack tecnico
+- Next.js 16 (App Router)
+- React 19
+- TypeScript
+- Tailwind CSS
+- tRPC para API interna
+- Drizzle ORM + Neon PostgreSQL
+- Desplegado como aplicacion serverless
+
+---
+
+## Casos de uso
+
+### Restaurante de barrio
+Un restaurante familiar quiere recibir pedidos para llevar sin depender de Glovo. Configura YaComanda en 15 minutos, sube su carta con una foto y comparte su WhatsApp con los clientes del barrio. Los pedidos llegan directos al panel y a cocina. Ahorra mas de 1.000 EUR/mes en comisiones.
+
+### Pizzeria con delivery propio
+Una pizzeria que ya tiene repartidores propios usa YaComanda para recibir pedidos por WhatsApp. Los clientes pagan con tarjeta online y el repartidor solo entrega. El KDS en cocina muestra los pedidos en orden de prioridad.
+
+### Bar de tapas en zona turistica
+Un bar en una zona con turistas internacionales activa YaComanda. El bot detecta automaticamente si el cliente escribe en ingles, frances o aleman y responde en su idioma. Los nombres de los platos se mantienen en espanol (como estan en la carta).
+
+### Cadena de restaurantes
+Una cadena con varios locales usa el plan Negocio con multi-local. Cada local tiene su propio numero de WhatsApp y carta, pero la gestion centralizada permite ver analiticas globales.
+
+### Complemento a Glovo/Just Eat
+Un restaurante que ya usa plataformas de delivery anade YaComanda como canal directo. Los clientes recurrentes que ya conocen el restaurante pueden pedir por WhatsApp sin comisiones. Las plataformas siguen captando nuevos clientes.
+
+---
+
+## Precios
+
+Todos los planes son tarifa plana mensual, sin comisiones por pedido. Sin permanencia. Precios sin IVA (21%).
+
+### Plan Esencial — 29 EUR/mes
+- 500 pedidos/mes
+- Bot IA en WhatsApp
+- Panel de gestion
+- Cobro con tarjeta y efectivo
+- Gestion de carta
+- Historial de pedidos
+
+### Plan Profesional — 79 EUR/mes (mas popular)
+- Hasta 2.000 pedidos/mes
+- Todo lo de Esencial
+- Analiticas avanzadas
+- Soporte prioritario
+- Gestion de equipo
+- Exportacion de datos
+
+### Plan Negocio — 199 EUR/mes
+- Pedidos ilimitados
+- Todo lo de Profesional
+- Multi-local
+- Account manager dedicado
+- API personalizada
+- Integraciones a medida
+
+### Prueba gratuita
+- 30 dias gratis con todas las funcionalidades
+- Sin tarjeta de credito para empezar
+- 50 pedidos incluidos en la prueba
+
+### Costes de procesamiento de pagos
+- YaComanda no cobra comisiones por pedido
+- Pagos online con tarjeta: comision estandar de Stripe (1,5% + 0,25 EUR por transaccion en Europa)
+- Pagos en efectivo: sin coste adicional
+- Se puede cambiar de plan en cualquier momento (prorrateo al subir, siguiente ciclo al bajar)
+
+---
+
+## Kit Digital
+
+YaComanda es elegible como solucion de comercio electronico dentro del programa Kit Digital del Gobierno de Espana. El Kit Digital es un programa de ayudas para la digitalizacion de pymes y autonomos que permite financiar hasta el 100% del coste de la solucion.
+
+---
+
+## Ventajas frente a plataformas de delivery
+
+### Comisiones
+- Plataformas (Glovo, Uber Eats, Just Eat): 25-35% por pedido
+- YaComanda: 0% comisiones, tarifa plana desde 29 EUR/mes
+
+### Ejemplo de ahorro
+- 200 pedidos/mes x 20 EUR ticket medio = 4.000 EUR facturados
+- Comision plataformas (30%): 1.200 EUR/mes
+- Coste YaComanda: 29 EUR/mes
+- Ahorro: 1.171 EUR/mes (14.052 EUR/ano)
+
+### Datos de clientes
+- Plataformas: no tienes acceso a los datos de tus clientes
+- YaComanda: todos los datos son tuyos (nombre, telefono, historial, preferencias)
+
+### Marca
+- Plataformas: tu marca se diluye entre la competencia
+- YaComanda: el cliente habla directamente con tu WhatsApp, tu marca siempre en primer plano
+
+### Cobro
+- Plataformas: pagos retenidos durante semanas
+- YaComanda: cobro directo a tu cuenta via Stripe (al instante)
+
+### Compatibilidad
+- YaComanda es compatible con las plataformas de delivery. No es un sustituto, es un complemento para tu canal directo.
+
+---
+
+## Preguntas frecuentes (FAQ)
+
+### Generales
+
+**¿Puedo usar mi numero de WhatsApp actual?**
+Si, puedes vincular tu numero de WhatsApp Business existente. Solo necesitas acceso a la API de WhatsApp Business, y te guiamos paso a paso durante la configuracion.
+
+**¿Que pasa si la IA se equivoca en un pedido?**
+El cliente siempre confirma el pedido antes de que se procese — ve un resumen con botones de Confirmar/Cancelar. Si la IA no esta segura, escala la conversacion a un humano automaticamente. Ademas, puedes revisar y modificar cualquier pedido desde el panel.
+
+**Ya uso Glovo/Just Eat/Uber Eats. ¿Puedo usar las dos cosas?**
+Absolutamente. YaComanda no sustituye a las plataformas de delivery, las complementa. Tus clientes recurrentes que ya te conocen pueden pedirte directamente por WhatsApp sin comisiones. Las plataformas siguen funcionando para captar nuevos clientes.
+
+**¿Que pasa con mis datos si cancelo?**
+Tus datos te pertenecen. Puedes exportar tu lista de clientes y pedidos en cualquier momento. Al cancelar, tu cuenta se desactiva pero los datos se mantienen 30 dias por si cambias de opinion. Despues se eliminan conforme al RGPD.
+
+**¿Cuanto se tarda en configurar todo?**
+La configuracion del panel tarda unos 15 minutos: subes tu carta (puedes hacerle una foto), configuras el bot y listo. La conexion de WhatsApp Business API requiere verificacion por parte de Meta, que normalmente se completa en 24-48 horas.
+
+**¿Cuanto cuesta procesar pagos online?**
+YaComanda no cobra comisiones por pedido. Los pagos online con tarjeta pasan por Stripe, que cobra 1,5% + 0,25 EUR por transaccion (tarifa estandar europea). Si tus clientes pagan en efectivo al recoger, no hay ningun coste adicional mas alla de tu plan mensual.
+
+**¿Hay periodo de prueba gratuito?**
+Si. Tienes 30 dias de prueba gratis con todas las funcionalidades. No necesitas tarjeta de credito para empezar. Sin permanencia ni penalizaciones si decides no continuar.
+
+### Sobre precios
+
+**¿Hay permanencia?**
+No, sin permanencia. Puedes cancelar tu plan en cualquier momento desde el panel de facturacion. Tu cuenta seguira activa hasta el final del periodo facturado.
+
+**¿Los precios incluyen IVA?**
+Los precios mostrados no incluyen IVA. El IVA aplicable (21%) se anadira en la factura.
+
+**¿Que es el Kit Digital?**
+El Kit Digital es un programa de ayudas del Gobierno de Espana para la digitalizacion de pymes y autonomos. YaComanda es elegible como solucion de comercio electronico, lo que significa que podrias financiar hasta el 100% del coste con esta subvencion.
+
+**¿Puedo cambiar de plan en cualquier momento?**
+Si. Puedes subir o bajar de plan cuando quieras. Si subes, se te cobrara la diferencia prorrateada. Si bajas, el cambio se aplica en el siguiente ciclo de facturacion.
+
+**¿Que pasa si supero el limite de pedidos?**
+Te avisaremos cuando estes cerca del limite. Si lo superas, tus pedidos seguiran funcionando pero te recomendaremos subir de plan. Nunca cortamos el servicio sin aviso.
+
+---
+
+## Cumplimiento legal
+
+- RGPD: Cumplimiento completo con el Reglamento General de Proteccion de Datos
+- LSSI-CE: Cumplimiento con la Ley de Servicios de la Sociedad de la Informacion
+- Datos alojados en la Union Europea
+- Exportacion completa de datos del cliente disponible en cualquier momento
+- Politica de privacidad: https://www.yacomanda.com/privacidad
+- Terminos de servicio: https://www.yacomanda.com/terminos
+
+---
+
+## Paginas del sitio
+
+- Inicio: https://www.yacomanda.com
+- Precios: https://www.yacomanda.com/pricing
+- Contacto: https://www.yacomanda.com/contacto
+- Politica de privacidad: https://www.yacomanda.com/privacidad
+- Terminos de servicio: https://www.yacomanda.com/terminos
+- Sitemap: https://www.yacomanda.com/sitemap.xml
+
+---
+
+## Contacto
+
+- Email: hola@yacomanda.com
+- WhatsApp: disponible en la pagina de contacto
+- Web: https://www.yacomanda.com/contacto

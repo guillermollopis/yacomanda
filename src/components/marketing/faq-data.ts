@@ -32,6 +32,6 @@ export const faqs = [
   {
     question: "¿Hay periodo de prueba gratuito?",
     answer:
-      "Si. Tienes 14 dias de prueba gratis con todas las funcionalidades. No necesitas tarjeta de credito para empezar. Sin permanencia ni penalizaciones si decides no continuar.",
+      "Si. Tienes 30 dias de prueba gratis con todas las funcionalidades. No necesitas tarjeta de credito para empezar. Sin permanencia ni penalizaciones si decides no continuar.",
   },
 ];

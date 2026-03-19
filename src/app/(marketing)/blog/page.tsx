@@ -25,6 +25,28 @@ interface BlogPost {
 
 const posts: BlogPost[] = [
   {
+    slug: "kit-digital-restaurante-subvencion",
+    title:
+      "Kit Digital para restaurantes: como conseguir la subvencion en 2026",
+    description:
+      "Guia completa sobre el Kit Digital para hosteleria. Requisitos, importes por segmento y como solicitar el bono digital para digitalizar tu restaurante.",
+    date: "16 marzo 2026",
+    readTime: "7 min",
+    tag: "Kit Digital",
+    tagColor: "bg-amber-50 text-amber-600 border-amber-200",
+  },
+  {
+    slug: "bot-whatsapp-restaurante",
+    title:
+      "Bot de WhatsApp para restaurantes: que es y como funciona",
+    description:
+      "Descubre como funciona un bot de WhatsApp para restaurantes, las diferencias entre bots con reglas y con IA, y que buscar para elegir el mejor.",
+    date: "16 marzo 2026",
+    readTime: "7 min",
+    tag: "Tecnologia",
+    tagColor: "bg-violet-50 text-violet-600 border-violet-200",
+  },
+  {
     slug: "comisiones-glovo-restaurantes",
     title:
       "Comisiones de Glovo, Uber Eats y Just Eat: cuanto paga realmente tu restaurante",

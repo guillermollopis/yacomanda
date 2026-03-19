@@ -167,10 +167,10 @@ export default function PricingPage() {
           programa Kit Digital del Gobierno de Espana. Puedes financiar hasta el
           100% del coste si eres pyme o autonomo.{" "}
           <Link
-            href="/contacto"
+            href="/kit-digital"
             className="font-semibold text-green-600 hover:text-green-500"
           >
-            Contactanos para mas informacion
+            Mas informacion sobre Kit Digital
           </Link>
           .
         </p>

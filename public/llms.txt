@@ -1,0 +1,82 @@
+# YaComanda
+
+> YaComanda es un sistema de pedidos por WhatsApp con inteligencia artificial para restaurantes en Espana. Los clientes hacen sus pedidos por WhatsApp, la IA los entiende y confirma, y el restaurante solo tiene que cocinar. Sin comisiones por pedido. Tarifa plana mensual.
+
+> YaComanda is an AI-powered WhatsApp ordering system for restaurants in Spain. Customers order via WhatsApp, AI understands and confirms, and the restaurant just cooks. No per-order commissions. Flat monthly fee.
+
+## Informacion general
+
+- Web: https://www.yacomanda.com
+- Contacto: hola@yacomanda.com
+- Idioma principal: Espanol
+- Mercado: Restaurantes, bares, cafeterias y negocios de comida en Espana
+- Modelo: SaaS B2B, tarifa plana mensual
+
+## Como funciona
+
+1. El cliente escribe por WhatsApp lo que quiere pedir (texto, audio o foto)
+2. La IA entiende el pedido, lo cruza con la carta del restaurante y muestra un resumen con precio
+3. El cliente confirma con botones interactivos de WhatsApp (Confirmar / Cancelar)
+4. El pago se procesa automaticamente (tarjeta online via Stripe o efectivo)
+5. El pedido aparece en el panel del restaurante y en la pantalla de cocina (KDS)
+6. El cliente recibe notificaciones de estado por WhatsApp (preparando, listo, etc.)
+
+## Funcionalidades principales
+
+- **Bot IA en WhatsApp**: Entiende texto, audio y fotos. Responde en el idioma del cliente. Funciona 24/7.
+- **Panel de gestion**: Pedidos en tiempo real, gestion de carta, clientes, equipo y analiticas. Responsive y PWA.
+- **Pantalla de cocina (KDS)**: Vista kanban con columnas Pendiente/Preparando/Listo. Alarma sonora. Modo pantalla completa.
+- **Cobro automatico**: Pago con tarjeta online (Stripe), efectivo o Bizum. Sin comisiones de YaComanda.
+- **Gestion de carta**: Alta manual o importacion por foto (vision IA). Variantes, alergenos, disponibilidad.
+- **Analiticas**: Pedidos por dia, ingresos, productos top, horas punta, clientes nuevos vs recurrentes.
+- **Notificaciones al propietario**: Notificacion por WhatsApp al dueno con botones para aceptar/rechazar pedidos.
+- **Multiidioma**: El bot detecta el idioma del cliente y responde en su idioma. Ideal para zonas turisticas.
+- **RGPD**: Cumplimiento con RGPD y LSSI-CE. Datos en la UE. Exportacion de datos de clientes.
+
+## Precios
+
+Todos los planes son tarifa plana mensual, sin comisiones por pedido. Sin permanencia. Precios sin IVA.
+
+- **Esencial — 29 EUR/mes**: 500 pedidos/mes, bot IA en WhatsApp, panel de gestion, cobro con tarjeta y efectivo, gestion de carta, historial de pedidos.
+- **Profesional — 79 EUR/mes** (mas popular): Hasta 2.000 pedidos/mes, todo lo de Esencial, analiticas avanzadas, soporte prioritario, gestion de equipo, exportacion de datos.
+- **Negocio — 199 EUR/mes**: Pedidos ilimitados, todo lo de Profesional, multi-local, account manager dedicado, API personalizada, integraciones a medida.
+
+Prueba gratuita de 30 dias. Sin tarjeta de credito.
+
+Los pagos online con tarjeta tienen la comision estandar de Stripe (1,5% + 0,25 EUR por transaccion). Los pagos en efectivo no tienen coste adicional.
+
+## Kit Digital
+
+YaComanda es elegible como solucion de comercio electronico dentro del programa Kit Digital del Gobierno de Espana. Pymes y autonomos pueden financiar hasta el 100% del coste con esta subvencion.
+
+## Ventajas frente a plataformas de delivery (Glovo, Uber Eats, Just Eat)
+
+| Aspecto | Plataformas de delivery | YaComanda |
+|---|---|---|
+| Comisiones | 25-35% por pedido | 0% (tarifa plana) |
+| Datos de clientes | No tienes acceso | Tuyos al 100% |
+| Canal | Dependes de la plataforma | Tu WhatsApp, tu marca |
+| Cobro | Retenido semanas | Directo a tu cuenta |
+| Compatibilidad | Exclusividad implicita | Compatible con Glovo, Just Eat, etc. |
+
+Ejemplo: 200 pedidos/mes x 20 EUR de media = 1.200 EUR/mes en comisiones con plataformas. Con YaComanda: 29 EUR/mes.
+
+## Preguntas frecuentes
+
+- **¿Puedo usar mi numero de WhatsApp actual?** Si, puedes vincular tu numero de WhatsApp Business existente con la API de WhatsApp Business.
+- **¿Que pasa si la IA se equivoca?** El cliente siempre confirma antes de procesar. Si la IA no esta segura, escala a un humano automaticamente.
+- **¿Puedo seguir usando Glovo/Just Eat?** Si, YaComanda complementa las plataformas. Tus clientes recurrentes piden directo sin comisiones.
+- **¿Cuanto se tarda en configurar?** 15 minutos para el panel. La verificacion de WhatsApp Business API por Meta tarda 24-48 horas.
+- **¿Hay periodo de prueba?** 30 dias gratis con todas las funcionalidades. Sin tarjeta de credito.
+
+## Paginas del sitio
+
+- Inicio: https://www.yacomanda.com
+- Precios: https://www.yacomanda.com/pricing
+- Contacto: https://www.yacomanda.com/contacto
+- Privacidad: https://www.yacomanda.com/privacidad
+- Terminos: https://www.yacomanda.com/terminos
+
+## Informacion extendida
+
+Para mas detalles, consultar: https://www.yacomanda.com/llms-full.txt

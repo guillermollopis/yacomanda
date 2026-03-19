@@ -89,7 +89,7 @@ export default function LandingPage() {
 
               {/* Mini trust */}
               <div className="mt-8 flex items-center gap-3 text-sm text-slate-500">
-                <span>Prueba gratuita &middot; Sin tarjeta &middot; 5 min setup</span>
+                <span>30 dias gratis &middot; Sin tarjeta &middot; 5 min setup</span>
               </div>
             </div>
 
@@ -156,7 +156,7 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 md:grid-cols-4">
           {[
             { value: "0%", label: "Comisiones por pedido", icon: Shield },
-            { value: "24/7", label: "Bot activo sin descanso", icon: Users },
+            { value: "24/7", label: "Bot activo sin descanso", icon: Bot },
             { value: "~30%", label: "Ahorro vs plataformas", icon: TrendingUp },
             { value: "100%", label: "Subvencionable con Kit Digital", icon: Zap },
           ].map((stat) => (
@@ -250,6 +250,11 @@ export default function LandingPage() {
               <br />
               <span className="font-bold text-gradient-warm">Ahorras 1.171€ cada mes.</span>
             </p>
+            <Link href="/sign-up" className="mt-4 inline-block">
+              <Button className="rounded-xl bg-green-500 px-8 text-white hover:bg-green-400">
+                Empieza a ahorrar <ArrowRight className="ml-2 size-4" />
+              </Button>
+            </Link>
           </div>
         </AnimateOnScroll>
       </section>
@@ -316,6 +321,14 @@ export default function LandingPage() {
                 </p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-12 text-center">
+            <Link href="/sign-up">
+              <Button className="rounded-xl bg-green-500 px-8 text-white hover:bg-green-400">
+                Empieza gratis <ArrowRight className="ml-2 size-4" />
+              </Button>
+            </Link>
           </div>
         </AnimateOnScroll>
       </section>
@@ -400,6 +413,14 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+
+          <div className="mt-12 text-center">
+            <Link href="/sign-up">
+              <Button className="rounded-xl bg-green-500 px-8 text-white hover:bg-green-400">
+                Empieza gratis <ArrowRight className="ml-2 size-4" />
+              </Button>
+            </Link>
+          </div>
         </AnimateOnScroll>
       </section>
 
@@ -451,6 +472,14 @@ export default function LandingPage() {
                 </p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-10 text-center">
+            <Link href="/sign-up">
+              <Button className="rounded-xl bg-green-500 px-8 text-white hover:bg-green-400">
+                Prueba gratis 30 dias <ArrowRight className="ml-2 size-4" />
+              </Button>
+            </Link>
           </div>
         </AnimateOnScroll>
       </section>
@@ -560,7 +589,10 @@ export default function LandingPage() {
               <p className="text-sm font-medium text-slate-700">
                 🏛️ Financiable con{" "}
                 <strong>Kit Digital</strong> — Subvencion de hasta el 100% para
-                pymes y autonomos
+                pymes y autonomos.{" "}
+                <Link href="/kit-digital" className="font-semibold text-green-600 hover:text-green-500 underline">
+                  Mas informacion →
+                </Link>
               </p>
             </div>
             <p className="text-center text-xs text-slate-400">
