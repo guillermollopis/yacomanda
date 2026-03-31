@@ -6,7 +6,7 @@ import { Resend } from "resend";
 // Schema
 // ---------------------------------------------------------------------------
 
-const templateEnum = z.enum(["cold_intro", "kit_digital", "follow_up"]);
+const templateEnum = z.enum(["cold_intro", "kit_digital", "follow_up", "pilot_invite", "latam_intro", "latam_follow_up"]);
 
 const outreachSchema = z.object({
   to: z.string().email(),
@@ -118,6 +118,62 @@ function buildEmail(
 <p>Queria comentarte que ademas con el <strong>Kit Digital del gobierno puede salirte gratis</strong> durante 12 meses, y nosotros nos encargamos del papeleo.</p>
 <p>Si te interesa, responde y te lo explico en 5 minutos. Sin compromiso.</p>
 <p>Un saludo,<br>Guillem</p>
+        `),
+      };
+
+    case "pilot_invite":
+      return {
+        subject: `${restaurantName} — probaria gratis un bot de pedidos por WhatsApp?`,
+        html: `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;line-height:1.7;max-width:600px;margin:0 auto;padding:20px;font-size:15px;">
+<p>Hola,</p>
+<p>Soy Guillem. Estoy buscando 5 restaurantes para probar gratis durante 3 meses un bot de WhatsApp que recibe pedidos automaticamente. He pensado en ${restaurantName}.</p>
+<p>La idea es sencilla: tus clientes te escriben por WhatsApp, una IA entiende el pedido, lo confirma y te lo manda a cocina. Sin comisiones, sin apps, sin intermediarios.</p>
+<p>Busco restaurantes reales para probarlo antes del lanzamiento. A cambio de tu feedback, te lo configuro yo mismo y es completamente gratis durante 3 meses. Sin compromiso — si no te convence, lo dejamos y ya.</p>
+<p>¿Te interesa? Solo responde a este email o entra en <a href="https://yacomanda.com/piloto?ref=email" style="color:#16a34a;">yacomanda.com/piloto</a></p>
+<p>Guillem<br><span style="color:#666;font-size:13px;">Fundador de YaComanda · +34 636 873 210</span></p>
+<p style="margin-top:32px;color:#999;font-size:12px;">Si no quieres recibir mas emails, responde con BAJA y te eliminaremos de inmediato.</p>
+</body>
+</html>`,
+      };
+
+    case "latam_intro":
+      return {
+        subject: `${restaurantName}: ¿cuanto pierdes en comisiones de Rappi o PedidosYa?`,
+        html: `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;line-height:1.7;max-width:600px;margin:0 auto;padding:20px;font-size:15px;">
+<p>Hola,</p>
+<p>Un dato rapido: si ${restaurantName} recibe 20 pedidos al dia por Rappi o PedidosYa, estas pagando entre <strong>$300,000 y $600,000 COP al mes solo en comisiones</strong> (o el equivalente en tu moneda).</p>
+<p>Esos clientes ya te conocen. Ya saben tu nombre. ¿Por que pagar el 30% para que te hagan un pedido?</p>
+<p>Hay una alternativa: <strong>que te escriban directo por WhatsApp.</strong></p>
+<p>Me llamo Guillem. Cree <a href="https://yacomanda.com?ref=latam" style="color:#16a34a;font-weight:600;">YaComanda</a>, un bot de IA que recibe pedidos por WhatsApp automaticamente. Funciona asi:</p>
+<ol style="padding-left:20px;">
+  <li>Tu cliente te escribe por WhatsApp como siempre</li>
+  <li>La IA entiende el pedido (texto, audio, fotos de la carta)</li>
+  <li>Confirma, cobra y manda el pedido a tu cocina</li>
+</ol>
+<p><strong>Sin comisiones. Sin apps. Sin intermediarios.</strong> Desde $29 USD/mes, con 30 dias gratis para probarlo.</p>
+<p>¿Quieres ver como funciona con tu carta? Solo responde a este email con el nombre de tu restaurante y te monto una demo personalizada gratis.</p>
+<p>Guillem<br><span style="color:#666;font-size:13px;">Fundador de YaComanda · <a href="https://yacomanda.com" style="color:#16a34a;text-decoration:none;">yacomanda.com</a></span></p>
+<p style="margin-top:32px;color:#999;font-size:12px;">Si no quieres recibir mas emails, responde con BAJA y te eliminaremos de inmediato.</p>
+</body>
+</html>`,
+      };
+
+    case "latam_follow_up":
+      return {
+        subject: `Re: ${restaurantName} — una pregunta rapida`,
+        html: wrapHtml(`
+<p>Hola,</p>
+<p>Te escribi hace unos dias sobre YaComanda — el bot que recibe pedidos por WhatsApp para restaurantes como ${restaurantName}.</p>
+<p>Solo una pregunta: <strong>¿tus clientes te escriben por WhatsApp para hacer pedidos?</strong></p>
+<p>Si la respuesta es si, puedo mostrarte en 5 minutos como automatizar eso completamente. Gratis durante 30 dias, sin tarjeta.</p>
+<p>Si no, perdona la molestia y no te vuelvo a escribir.</p>
+<p>Guillem</p>
         `),
       };
   }

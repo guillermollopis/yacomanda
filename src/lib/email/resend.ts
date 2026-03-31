@@ -29,10 +29,6 @@ export async function sendAdminNewBusinessEmail(business: {
     return;
   }
 
-  const pendingTasks: string[] = [];
-  if (business.needsWhatsApp) pendingTasks.push("Configurar WhatsApp Business API");
-  if (business.needsStripe) pendingTasks.push("Ayudar con Stripe Connect");
-
   const html = `
     <h2>Nuevo restaurante registrado</h2>
     <table style="border-collapse:collapse;font-family:sans-serif;">
@@ -43,10 +39,12 @@ export async function sendAdminNewBusinessEmail(business: {
       <tr><td style="padding:4px 12px 4px 0;font-weight:bold;">Propietario:</td><td>${business.ownerName} (${business.ownerEmail})</td></tr>
     </table>
     ${
-      pendingTasks.length > 0
-        ? `<h3 style="color:#dc2626;">Tareas pendientes:</h3><ul>${pendingTasks.map((t) => `<li>${t}</li>`).join("")}</ul>`
-        : '<p style="color:#16a34a;">No hay tareas pendientes.</p>'
+      business.needsWhatsApp
+        ? `<h3 style="color:#dc2626;">Acción necesaria:</h3>
+           <p>El negocio <strong>no conectó WhatsApp</strong> durante el onboarding. Sin WhatsApp el bot no funciona — contacta al propietario para ayudarle a completar la conexión desde Ajustes &gt; WhatsApp.</p>`
+        : '<p style="color:#16a34a;">WhatsApp conectado correctamente.</p>'
     }
+    <p style="margin-top:8px;color:#666;font-size:13px;">Stripe: ${business.needsStripe ? "No conectado (opcional — el cliente puede configurarlo en Ajustes &gt; Pagos cuando lo necesite)." : "Conectado."}</p>
     <p style="margin-top:16px;color:#666;font-size:12px;">Este email se envió automáticamente al completar el onboarding.</p>
   `;
 

@@ -25,6 +25,116 @@ interface BlogPost {
 
 const posts: BlogPost[] = [
   {
+    slug: "whatsapp-business-api-restaurantes",
+    title:
+      "WhatsApp Business API para restaurantes: que es, como funciona y cuanto cuesta",
+    description:
+      "Guia completa sobre la WhatsApp Business API para restaurantes. Diferencias con WhatsApp Business, costes reales, casos de uso y por que conviene usar una plataforma en vez de integrarlo tu mismo.",
+    date: "31 marzo 2026",
+    readTime: "9 min",
+    tag: "Tecnologia",
+    tagColor: "bg-violet-50 text-violet-600 border-violet-200",
+  },
+  {
+    slug: "alternativas-uber-eats-sin-comisiones",
+    title:
+      "5 alternativas a Uber Eats sin comisiones para restaurantes en 2026",
+    description:
+      "Comparativa de las mejores alternativas a Uber Eats para restaurantes. Precios reales, pros y contras de cada opcion para dejar de pagar el 30% en comisiones.",
+    date: "31 marzo 2026",
+    readTime: "8 min",
+    tag: "Comparativa",
+    tagColor: "bg-blue-50 text-blue-600 border-blue-200",
+  },
+  {
+    slug: "menu-digital-gratis-restaurante",
+    title:
+      "Como crear un menu digital gratis para tu restaurante en 2026",
+    description:
+      "5 formas de crear un menu digital para tu restaurante: desde PDF con QR hasta menus integrados con pedidos por WhatsApp. Comparativa con pros, contras y costes.",
+    date: "31 marzo 2026",
+    readTime: "8 min",
+    tag: "Guia",
+    tagColor: "bg-green-50 text-green-600 border-green-200",
+  },
+  {
+    slug: "pedidos-whatsapp-restaurante-argentina",
+    title:
+      "Como recibir pedidos por WhatsApp en tu restaurante en Argentina",
+    description:
+      "Guia completa para restaurantes argentinos que quieren automatizar pedidos por WhatsApp. Desde lo manual hasta bots con IA que cobran con Mercado Pago.",
+    date: "31 marzo 2026",
+    readTime: "7 min",
+    tag: "Guia",
+    tagColor: "bg-green-50 text-green-600 border-green-200",
+  },
+  {
+    slug: "pedidos-whatsapp-restaurante-peru",
+    title:
+      "Como recibir pedidos por WhatsApp en tu restaurante en Peru",
+    description:
+      "Guia completa para restaurantes peruanos que quieren automatizar pedidos por WhatsApp. Desde lo manual hasta bots con IA que cobran con Yape y Plin.",
+    date: "31 marzo 2026",
+    readTime: "7 min",
+    tag: "Guia",
+    tagColor: "bg-green-50 text-green-600 border-green-200",
+  },
+  {
+    slug: "pedidos-whatsapp-restaurante-chile",
+    title:
+      "Como recibir pedidos por WhatsApp en tu restaurante en Chile",
+    description:
+      "Guia completa para restaurantes chilenos que quieren automatizar pedidos por WhatsApp. Desde lo manual hasta bots con IA que cobran con Mercado Pago y Webpay.",
+    date: "31 marzo 2026",
+    readTime: "7 min",
+    tag: "Guia",
+    tagColor: "bg-green-50 text-green-600 border-green-200",
+  },
+  {
+    slug: "como-digitalizar-restaurante-latinoamerica",
+    title:
+      "Como digitalizar tu restaurante en Latinoamerica sin gastar una fortuna",
+    description:
+      "Guia practica de digitalizacion para restaurantes en LATAM. Pedidos online, WhatsApp, pagos digitales y herramientas de bajo costo para empezar hoy.",
+    date: "30 marzo 2026",
+    readTime: "9 min",
+    tag: "Digitalizacion",
+    tagColor: "bg-purple-50 text-purple-600 border-purple-200",
+  },
+  {
+    slug: "pedidos-whatsapp-restaurante-colombia",
+    title:
+      "Como recibir pedidos por WhatsApp en tu restaurante en Colombia",
+    description:
+      "Guia completa para restaurantes colombianos que quieren automatizar pedidos por WhatsApp. Desde lo manual hasta bots con IA que cobran con Nequi y Daviplata.",
+    date: "30 marzo 2026",
+    readTime: "7 min",
+    tag: "Guia",
+    tagColor: "bg-green-50 text-green-600 border-green-200",
+  },
+  {
+    slug: "pedidos-whatsapp-restaurante-mexico",
+    title:
+      "Como recibir pedidos por WhatsApp en tu restaurante en Mexico",
+    description:
+      "Guia completa para restaurantes mexicanos que quieren automatizar pedidos por WhatsApp. Desde la opcion manual hasta bots con IA que cobran con Mercado Pago.",
+    date: "30 marzo 2026",
+    readTime: "7 min",
+    tag: "Guia",
+    tagColor: "bg-green-50 text-green-600 border-green-200",
+  },
+  {
+    slug: "alternativas-rappi-sin-comisiones",
+    title:
+      "5 alternativas a Rappi sin comisiones para restaurantes en 2026",
+    description:
+      "Comparativa de las mejores alternativas a Rappi para restaurantes en Colombia, Mexico y Latinoamerica. Precios reales, pros y contras de cada opcion.",
+    date: "30 marzo 2026",
+    readTime: "8 min",
+    tag: "Comparativa",
+    tagColor: "bg-blue-50 text-blue-600 border-blue-200",
+  },
+  {
     slug: "kit-digital-restaurante-subvencion",
     title:
       "Kit Digital para restaurantes: como conseguir la subvencion en 2026",

@@ -15,7 +15,7 @@ const batchSchema = z.object({
     )
     .min(1)
     .max(200),
-  template: z.enum(["cold_intro", "kit_digital", "follow_up"]),
+  template: z.enum(["cold_intro", "kit_digital", "follow_up", "pilot_invite", "latam_intro", "latam_follow_up"]),
   secret: z.string().min(1),
   delayMs: z.number().int().min(1000).max(60000).default(5000),
 });

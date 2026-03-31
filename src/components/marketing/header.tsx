@@ -62,12 +62,12 @@ export function MarketingHeader() {
               Iniciar sesion
             </Button>
           </Link>
-          <Link href="/sign-up">
+          <Link href="/piloto">
             <Button
               size="sm"
-              className="rounded-lg bg-green-500 font-semibold text-white shadow-md shadow-green-500/25 hover:bg-green-400"
+              className="rounded-lg bg-amber-500 font-semibold text-white shadow-md shadow-amber-500/25 hover:bg-amber-400"
             >
-              Empezar gratis
+              Piloto gratuito
             </Button>
           </Link>
         </div>
@@ -110,9 +110,9 @@ export function MarketingHeader() {
                     Iniciar sesion
                   </Button>
                 </Link>
-                <Link href="/sign-up" onClick={() => setOpen(false)}>
-                  <Button className="w-full bg-green-500 text-white hover:bg-green-400">
-                    Empezar gratis
+                <Link href="/piloto" onClick={() => setOpen(false)}>
+                  <Button className="w-full bg-amber-500 text-white hover:bg-amber-400">
+                    Piloto gratuito
                   </Button>
                 </Link>
               </div>

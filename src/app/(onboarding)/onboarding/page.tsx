@@ -366,16 +366,27 @@ function Step2WhatsApp({
   businessPhone?: string | null;
 }) {
   const [connectedPhone, setConnectedPhone] = useState<string | null>(null);
+  const [showSkipWarning, setShowSkipWarning] = useState(false);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>WhatsApp Business</CardTitle>
         <CardDescription>
-          Conecta tu WhatsApp Business en un clic.
+          Conecta tu WhatsApp Business para recibir pedidos.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!connectedPhone && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="text-sm text-amber-800">
+              <strong>Importante:</strong> Sin WhatsApp conectado, tus clientes
+              no podrán hacer pedidos. Este paso es necesario para que tu
+              negocio funcione en YaComanda.
+            </p>
+          </div>
+        )}
+
         {connectedPhone ? (
           <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
             <Check className="size-5 text-green-600 shrink-0" />
@@ -399,15 +410,56 @@ function Step2WhatsApp({
           </>
         )}
 
+        {showSkipWarning && !connectedPhone && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 space-y-3">
+            <p className="text-sm text-red-800">
+              <strong>¿Seguro que quieres omitir este paso?</strong> Sin
+              WhatsApp, tu negocio no podrá recibir pedidos. Podrás conectarlo
+              después en Ajustes, pero tu bot no funcionará hasta entonces.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSkipWarning(false)}
+              >
+                Volver a intentar
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+                onClick={onNext}
+              >
+                Omitir de todas formas
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-between pt-2">
           <Button variant="outline" onClick={onBack}>
             <ArrowLeft className="mr-2 size-4" />
             Atrás
           </Button>
-          <Button onClick={onNext}>
-            {connectedPhone ? "Siguiente" : "Omitir por ahora"}
-            <ArrowRight className="ml-2 size-4" />
-          </Button>
+          {connectedPhone ? (
+            <Button onClick={onNext}>
+              Siguiente
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
+          ) : (
+            !showSkipWarning && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground text-xs"
+                onClick={() => setShowSkipWarning(true)}
+              >
+                Omitir por ahora
+                <SkipForward className="ml-1 size-3" />
+              </Button>
+            )
+          )}
         </div>
       </CardContent>
     </Card>
