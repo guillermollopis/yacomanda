@@ -6,7 +6,7 @@ import { Resend } from "resend";
 // Schema
 // ---------------------------------------------------------------------------
 
-const templateEnum = z.enum(["cold_intro", "kit_digital", "follow_up", "pilot_invite", "latam_intro", "latam_follow_up"]);
+const templateEnum = z.enum(["cold_intro", "kit_digital", "follow_up", "pilot_invite", "latam_intro", "latam_follow_up", "social_proof", "demo_personalizada"]);
 
 const outreachSchema = z.object({
   to: z.string().email(),
@@ -175,6 +175,61 @@ function buildEmail(
 <p>Si no, perdona la molestia y no te vuelvo a escribir.</p>
 <p>Guillem</p>
         `),
+      };
+
+    case "social_proof":
+      return {
+        subject: `${restaurantName} — restaurantes en Guatemala y Espana ya reciben pedidos por WhatsApp con IA`,
+        html: `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;line-height:1.7;max-width:600px;margin:0 auto;padding:20px;font-size:15px;">
+<p>Hola,</p>
+<p>Soy Guillem, fundador de <a href="https://yacomanda.com?ref=social-proof" style="color:#16a34a;font-weight:600;">YaComanda</a>.</p>
+<p>Queria compartir algo con ${restaurantName}: restaurantes en Guatemala y Espana ya estan usando un bot de IA en WhatsApp para recibir pedidos automaticamente. Sin comisiones, sin intermediarios.</p>
+<p><strong>Como funciona:</strong></p>
+<ol style="padding-left:20px;">
+  <li>Tu cliente te escribe por WhatsApp (como ya hace)</li>
+  <li>La IA entiende el pedido — texto, audio, incluso fotos de la carta</li>
+  <li>Confirma el pedido, cobra y lo envia a tu cocina</li>
+</ol>
+<p>Lo que dicen los restaurantes que ya lo usan:</p>
+<ul style="padding-left:20px;">
+  <li>"Antes perdiamos pedidos fuera de horario. Ahora el bot responde 24/7"</li>
+  <li>"Dejamos de pagar el 30% a las plataformas de delivery"</li>
+  <li>"Se configuro en 15 minutos con nuestra carta"</li>
+</ul>
+<p><strong>El coste:</strong> $29 USD/mes. Sin comisiones por pedido. Sin contratos. 30 dias gratis para probarlo.</p>
+<p>¿Quieres ver como funcionaria con la carta de ${restaurantName}? Responde a este email y te preparo una demo personalizada gratis.</p>
+<p>Guillem<br><span style="color:#666;font-size:13px;">Fundador de YaComanda · <a href="https://yacomanda.com" style="color:#16a34a;text-decoration:none;">yacomanda.com</a></span></p>
+<p style="margin-top:32px;color:#999;font-size:12px;">Si no quieres recibir mas emails, responde con BAJA y te eliminaremos de inmediato.</p>
+</body>
+</html>`,
+      };
+
+    case "demo_personalizada":
+      return {
+        subject: `${restaurantName} — te monto una demo gratis con tu carta en 24h`,
+        html: `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;line-height:1.7;max-width:600px;margin:0 auto;padding:20px;font-size:15px;">
+<p>Hola,</p>
+<p>Te escribo porque he visto la carta de ${restaurantName} online y creo que podria funcionar muy bien con un bot de WhatsApp.</p>
+<p><strong>Mi propuesta es directa:</strong> te monto una demo personalizada con tu carta real — tu menu, tus precios, tus opciones — y la tienes lista en 24 horas. Completamente gratis, sin compromiso.</p>
+<p>La demo funciona asi:</p>
+<ol style="padding-left:20px;">
+  <li>Me pasas tu carta (PDF, foto, link a tu web — lo que tengas)</li>
+  <li>Yo configuro el bot con tus platos y precios reales</li>
+  <li>En 24h tienes un numero de WhatsApp de prueba donde puedes hacer pedidos como si fueras un cliente</li>
+</ol>
+<p>Si te convence, genial — desde $29 USD/mes sin comisiones. Si no, no pasa nada. Cero compromiso.</p>
+<p>¿Por que hago esto gratis? Porque estoy buscando los primeros restaurantes en tu zona y quiero que veas el resultado antes de decidir.</p>
+<p>Solo responde con "me interesa" y tu carta, y lo tengo listo manana.</p>
+<p>Guillem<br><span style="color:#666;font-size:13px;">Fundador de YaComanda · <a href="https://yacomanda.com" style="color:#16a34a;text-decoration:none;">yacomanda.com</a></span></p>
+<p style="margin-top:32px;color:#999;font-size:12px;">Si no quieres recibir mas emails, responde con BAJA y te eliminaremos de inmediato.</p>
+</body>
+</html>`,
       };
   }
 }

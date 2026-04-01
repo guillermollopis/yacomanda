@@ -25,6 +25,94 @@ interface BlogPost {
 
 const posts: BlogPost[] = [
   {
+    slug: "sistema-pedidos-restaurante-2026",
+    title:
+      "Los mejores sistemas de pedidos para restaurantes en 2026: comparativa completa",
+    description:
+      "Comparativa de 8 sistemas de pedidos para restaurantes: desde marketplaces como Glovo hasta bots de WhatsApp con IA. Precios, pros, contras y cual elegir segun tu negocio.",
+    date: "1 abril 2026",
+    readTime: "11 min",
+    tag: "Comparativa",
+    tagColor: "bg-blue-50 text-blue-600 border-blue-200",
+  },
+  {
+    slug: "comisiones-rappi-restaurantes",
+    title:
+      "Comisiones de Rappi para restaurantes: cuanto pagas realmente en 2026",
+    description:
+      "Desglose completo de las comisiones que Rappi cobra a restaurantes en Colombia, Mexico, Peru, Argentina, Chile y Ecuador. Costes ocultos y alternativas.",
+    date: "1 abril 2026",
+    readTime: "9 min",
+    tag: "Costes",
+    tagColor: "bg-red-50 text-red-600 border-red-200",
+  },
+  {
+    slug: "comisiones-pedidosya-restaurantes",
+    title:
+      "Comisiones de PedidosYa para restaurantes: desglose completo 2026",
+    description:
+      "Cuanto cobra PedidosYa a los restaurantes en Argentina, Chile, Peru, Ecuador y mas paises. Comisiones reales, costes ocultos y como ahorrar.",
+    date: "1 abril 2026",
+    readTime: "9 min",
+    tag: "Costes",
+    tagColor: "bg-red-50 text-red-600 border-red-200",
+  },
+  {
+    slug: "pedidos-whatsapp-restaurante-ecuador",
+    title:
+      "Como recibir pedidos por WhatsApp en tu restaurante en Ecuador",
+    description:
+      "Guia completa para restaurantes ecuatorianos que quieren automatizar pedidos por WhatsApp. Desde lo manual hasta bots con IA. Pagos con Deuna, PayPhone y transferencia.",
+    date: "1 abril 2026",
+    readTime: "8 min",
+    tag: "Guia",
+    tagColor: "bg-green-50 text-green-600 border-green-200",
+  },
+  {
+    slug: "como-vender-comida-por-whatsapp",
+    title:
+      "Como vender comida por WhatsApp: guia completa para restaurantes en 2026",
+    description:
+      "Aprende a vender comida por WhatsApp paso a paso. 3 niveles: manual, WhatsApp Business y bot automatizado. Pagos, consejos y errores comunes.",
+    date: "1 abril 2026",
+    readTime: "10 min",
+    tag: "Guia",
+    tagColor: "bg-green-50 text-green-600 border-green-200",
+  },
+  {
+    slug: "delivery-propio-restaurante-sin-intermediarios",
+    title:
+      "Como montar tu propio delivery sin depender de Glovo, Rappi ni Uber Eats",
+    description:
+      "Guia paso a paso para crear tu canal de delivery propio. Ahorra el 25-35% en comisiones y recupera el control de tus clientes. 4 opciones comparadas.",
+    date: "1 abril 2026",
+    readTime: "10 min",
+    tag: "Guia",
+    tagColor: "bg-green-50 text-green-600 border-green-200",
+  },
+  {
+    slug: "chatbot-ia-restaurante",
+    title:
+      "Chatbot con IA para restaurantes: que es, como funciona y los mejores en 2026",
+    description:
+      "Guia completa sobre chatbots con inteligencia artificial para restaurantes. Diferencias con bots de reglas, mejores soluciones, precios y como implementarlo en tu negocio.",
+    date: "1 abril 2026",
+    readTime: "10 min",
+    tag: "Tecnologia",
+    tagColor: "bg-violet-50 text-violet-600 border-violet-200",
+  },
+  {
+    slug: "pedidos-online-restaurante-sin-app",
+    title:
+      "Pedidos online para tu restaurante sin necesitar una app propia",
+    description:
+      "Descubre como recibir pedidos online en tu restaurante sin desarrollar una app propia. 5 alternativas reales ordenadas por coste y efectividad.",
+    date: "1 abril 2026",
+    readTime: "9 min",
+    tag: "Guia",
+    tagColor: "bg-green-50 text-green-600 border-green-200",
+  },
+  {
     slug: "whatsapp-business-api-restaurantes",
     title:
       "WhatsApp Business API para restaurantes: que es, como funciona y cuanto cuesta",
