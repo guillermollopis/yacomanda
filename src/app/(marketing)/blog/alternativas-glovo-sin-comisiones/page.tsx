@@ -304,8 +304,24 @@ export default function Post() {
           </p>
         </div>
 
+        {/* Calculator CTA */}
+        <div className="mt-12 rounded-2xl border-2 border-red-200 bg-gradient-to-r from-red-50 to-orange-50 p-8 text-center">
+          <h3 className="text-xl font-bold text-slate-900">
+            ¿Cuanto pierdes tu en comisiones?
+          </h3>
+          <p className="mt-2 text-sm text-slate-600">
+            Calcula en 10 segundos cuanto ahorras dejando las plataformas de delivery.
+          </p>
+          <Link href="/calculadora-comisiones" className="mt-4 inline-block">
+            <Button className="h-11 rounded-xl bg-red-600 px-8 font-semibold text-white hover:bg-red-500">
+              Calcular mi ahorro
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
+          </Link>
+        </div>
+
         {/* CTA */}
-        <div className="mt-12 rounded-2xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-8 text-center">
+        <div className="mt-6 rounded-2xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-8 text-center">
           <h3 className="text-xl font-bold text-slate-900">
             Prueba la opcion 5: pedidos por WhatsApp con IA
           </h3>

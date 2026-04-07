@@ -26,6 +26,7 @@ import {
   SoftwareApplicationJsonLd,
   FaqPageJsonLd,
 } from "@/components/marketing/json-ld";
+import { WhatsAppDemo } from "@/components/marketing/whatsapp-demo";
 
 export default function LandingPage() {
   return (
@@ -76,13 +77,13 @@ export default function LandingPage() {
                     <ArrowRight className="ml-2 size-5" />
                   </Button>
                 </Link>
-                <Link href="#como-funciona">
+                <Link href="#demo">
                   <Button
                     variant="outline"
                     size="lg"
                     className="h-12 rounded-xl border-white/15 bg-white/5 px-8 text-base text-white hover:bg-white/10 hover:text-white"
                   >
-                    Ver como funciona
+                    Probar demo en vivo
                   </Button>
                 </Link>
               </div>
@@ -334,6 +335,11 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================
+          INTERACTIVE DEMO — Try the bot
+          ============================================ */}
+      <WhatsAppDemo />
+
+      {/* ============================================
           FEATURES — Bento grid on dark background
           ============================================ */}
       <section id="funcionalidades" className="noise-overlay relative scroll-mt-20 overflow-hidden bg-slate-950 px-4 py-24">
@@ -485,6 +491,89 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================
+          SOCIAL PROOF — Real restaurants using it
+          ============================================ */}
+      <section className="bg-slate-50 px-4 py-24">
+        <AnimateOnScroll className="mx-auto max-w-5xl">
+          <div className="text-center">
+            <span className="mb-3 inline-block rounded-full bg-blue-50 px-4 py-1 text-sm font-semibold text-blue-600">
+              Restaurantes reales
+            </span>
+            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
+              Ya lo estan usando
+            </h2>
+            <p className="mt-4 text-lg text-slate-500">
+              Restaurantes en Latinoamerica y Espana confian en YaComanda
+            </p>
+          </div>
+
+          <div className="mt-14 grid gap-8 md:grid-cols-2">
+            {/* Testimonial card */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+              <div className="flex items-center gap-1 text-amber-400">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <svg key={s} className="size-5 fill-current" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+              <blockquote className="mt-4 text-base leading-relaxed text-slate-700">
+                &ldquo;Llevaba meses buscando una forma de recibir pedidos sin pagar comisiones abusivas a las plataformas de delivery. Con YaComanda mis clientes piden por WhatsApp y yo me ahorro las comisiones.&rdquo;
+              </blockquote>
+              <div className="mt-6 flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-full bg-green-100 text-sm font-bold text-green-700">
+                  KM
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Kenneth M.</p>
+                  <p className="text-xs text-slate-500">Restaurante Smash — Guatemala</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats card */}
+            <div className="flex flex-col justify-center gap-6 rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-8 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-900">
+                Lo que ahorran nuestros restaurantes
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-slate-600">Ahorro medio mensual</span>
+                  <span className="text-2xl font-extrabold text-green-600">1.171€</span>
+                </div>
+                <div className="h-px bg-green-200" />
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-slate-600">Ahorro medio anual</span>
+                  <span className="text-2xl font-extrabold text-green-600">14.052€</span>
+                </div>
+                <div className="h-px bg-green-200" />
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm text-slate-600">Tiempo de setup</span>
+                  <span className="text-2xl font-extrabold text-green-600">15 min</span>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500">
+                * Basado en un restaurante con 200 pedidos/mes a 20€ de ticket medio, comparado con Glovo (30% comision).
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-12 flex flex-col items-center gap-4">
+            <div className="flex items-center gap-6 text-sm text-slate-500">
+              <div className="flex items-center gap-2">
+                <Users className="size-4 text-green-600" />
+                <span>Restaurantes en 2 paises</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Shield className="size-4 text-green-600" />
+                <span>100% datos en la UE</span>
+              </div>
+            </div>
+          </div>
+        </AnimateOnScroll>
+      </section>
+
+      {/* ============================================
           PRICING — Gradient-border featured plan
           ============================================ */}
       <section className="bg-slate-50 px-4 py-24">
@@ -608,6 +697,57 @@ export default function LandingPage() {
             >
               Ver comparativa completa de planes →
             </Link>
+          </div>
+        </AnimateOnScroll>
+      </section>
+
+      {/* ============================================
+          CALCULATOR CTA
+          ============================================ */}
+      <section className="bg-gradient-to-r from-red-50 via-orange-50 to-amber-50 px-4 py-16 md:py-20">
+        <AnimateOnScroll className="mx-auto max-w-4xl">
+          <div className="flex flex-col items-center gap-8 md:flex-row md:gap-12">
+            <div className="flex-1 text-center md:text-left">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-600">
+                <TrendingUp className="size-4" />
+                Herramienta gratuita
+              </span>
+              <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
+                ¿Cuanto pierdes en comisiones?
+              </h2>
+              <p className="mt-3 text-lg text-slate-500">
+                Calcula en 10 segundos cuanto dinero regalas al ano a Glovo,
+                Rappi o Uber Eats — y cuanto ahorrarias con YaComanda.
+              </p>
+              <Link href="/calculadora-comisiones">
+                <Button
+                  size="lg"
+                  className="mt-6 bg-red-600 font-semibold text-white shadow-lg shadow-red-600/20 hover:bg-red-500"
+                >
+                  <BarChart3 className="mr-2 size-5" />
+                  Calcular mi ahorro
+                </Button>
+              </Link>
+            </div>
+            <div className="w-full max-w-xs rounded-2xl border border-red-200 bg-white p-5 shadow-lg">
+              <p className="text-sm font-semibold text-red-600">Ejemplo: 300 pedidos/mes</p>
+              <div className="mt-3 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Pagas a Glovo</span>
+                  <span className="font-bold text-red-600">1.620 &euro;/mes</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Pagas con YaComanda</span>
+                  <span className="font-bold text-green-600">29 &euro;/mes</span>
+                </div>
+                <div className="border-t border-slate-100 pt-2">
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-700">Ahorro anual</span>
+                    <span className="text-lg font-black text-green-600">19.092 &euro;</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </AnimateOnScroll>
       </section>

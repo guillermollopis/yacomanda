@@ -25,6 +25,50 @@ interface BlogPost {
 
 const posts: BlogPost[] = [
   {
+    slug: "app-pedidos-restaurante-sin-comisiones",
+    title:
+      "App para pedidos de restaurante sin comisiones: 7 opciones en 2026",
+    description:
+      "Comparativa de apps y sistemas para recibir pedidos en tu restaurante sin pagar comisiones. WhatsApp, web propia, QR y mas. Con precios reales.",
+    date: "7 abril 2026",
+    readTime: "10 min",
+    tag: "Comparativa",
+    tagColor: "bg-blue-50 text-blue-600 border-blue-200",
+  },
+  {
+    slug: "cuanto-cobra-glovo-a-restaurantes",
+    title:
+      "Cuanto cobra Glovo a los restaurantes: desglose real 2026",
+    description:
+      "Desglose completo de comisiones, costes ocultos y lo que Glovo realmente se lleva de cada pedido. Con ejemplos reales y calculadora de ahorro.",
+    date: "2 abril 2026",
+    readTime: "8 min",
+    tag: "Costes",
+    tagColor: "bg-red-50 text-red-600 border-red-200",
+  },
+  {
+    slug: "como-atraer-clientes-restaurante",
+    title:
+      "10 estrategias para atraer clientes a tu restaurante en 2026 (que realmente funcionan)",
+    description:
+      "Estrategias probadas de marketing para restaurantes: desde Google Business hasta WhatsApp como canal de ventas. Sin teoria, solo lo que funciona.",
+    date: "2 abril 2026",
+    readTime: "12 min",
+    tag: "Marketing",
+    tagColor: "bg-purple-50 text-purple-600 border-purple-200",
+  },
+  {
+    slug: "uber-eats-vs-delivery-propio",
+    title:
+      "Uber Eats vs delivery propio: que le conviene mas a tu restaurante en 2026",
+    description:
+      "Comparativa detallada con numeros reales. Cuanto pierdes con Uber Eats vs cuanto ahorras con un canal de pedidos propio por WhatsApp.",
+    date: "2 abril 2026",
+    readTime: "10 min",
+    tag: "Comparativa",
+    tagColor: "bg-blue-50 text-blue-600 border-blue-200",
+  },
+  {
     slug: "sistema-pedidos-restaurante-2026",
     title:
       "Los mejores sistemas de pedidos para restaurantes en 2026: comparativa completa",

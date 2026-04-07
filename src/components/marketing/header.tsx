@@ -12,9 +12,11 @@ import {
 } from "@/components/ui/sheet";
 
 const navLinks = [
+  { href: "/#demo", label: "Demo" },
   { href: "/#como-funciona", label: "Como funciona" },
   { href: "/#funcionalidades", label: "Funcionalidades" },
   { href: "/pricing", label: "Precios" },
+  { href: "/calculadora-comisiones", label: "Calculadora" },
   { href: "/kit-digital", label: "Kit Digital" },
   { href: "/blog", label: "Blog" },
   { href: "/contacto", label: "Contacto" },
