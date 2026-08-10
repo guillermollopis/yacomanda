@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# YaComanda — WhatsApp orders, straight to the kitchen
 
-## Getting Started
+A SaaS platform for Spanish restaurants that turns free-form WhatsApp messages into confirmed, paid
+orders without anyone typing them out. Customers write, photograph or record a voice note the way they
+always have; the system understands it, checks it against the live menu, takes payment via Bizum or
+Redsys, and drops a structured order into the kitchen dashboard.
 
-First, run the development server:
+The point was the 30% commission that delivery marketplaces charge. Restaurants already receive orders
+on WhatsApp — they just process them by hand.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+> **Status:** archived. A solo SaaS attempt I stopped working on, published as a portfolio piece rather
+> than a maintained product.
+
+---
+
+## The interesting part (for engineers)
+
+**Multimodal input, one structured output.** Orders arrive as text, as photographs of a handwritten
+list, or as voice notes — Spanish, unpunctuated, regional, frequently ambiguous. `lib/ai/whisper.ts`
+transcribes audio, `lib/ai/menu-extractor.ts` reads menus out of uploaded images and documents, and
+`lib/ai/order-parser.ts` collapses all of it into one Zod-validated shape.
+
+**Every model response is schema-validated.** The parser returns a typed object or it fails loudly:
+
+```ts
+const parsedResponseSchema = z.object({
+  type: z.enum(["order", "question", "greeting", "chitchat", "escalate"]),
+  message: z.string(),
+  items: z.array(parsedItemSchema).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  deliveryType: z.enum(["pickup", "delivery"]).optional(),
+});
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Intent classification with a designed escape hatch.** Not every message is an order. The model has to
+decide between an order, a question, a greeting, small talk, and `escalate` — the explicit
+"hand this to a human" path. A system that takes money on a customer's behalf needs a way to say *I am
+not confident enough*, and confidence is returned alongside the classification so the threshold lives
+in application code rather than in the prompt.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Grounding against the real catalogue.** Parsed items are verified against the restaurant's actual
+menu before anything is confirmed. The model proposes; the database decides. This is what stops a
+confidently hallucinated dish from reaching the kitchen.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Provider-agnostic.** OpenAI and Anthropic sit behind a single provider interface, so the model can be
+swapped per task or failed over without touching call sites.
 
-## Learn More
+**Type-safe end to end.** tRPC between client and server, Drizzle against Postgres, Zod at the model
+boundary — one type definition from database row to React component.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Layer | Choice |
+|---|---|
+| App | Next.js (App Router), React, TypeScript, Tailwind, Radix |
+| API | tRPC, TanStack Query |
+| Data | PostgreSQL (Neon serverless), Drizzle ORM |
+| AI | OpenAI + Anthropic SDKs, Whisper, Zod-validated outputs |
+| Auth | Clerk |
+| Payments | Stripe, plus Bizum/Redsys for the Spanish market |
+| Infra | Upstash Redis (rate limiting), AWS S3, Resend |
 
-## Deploy on Vercel
+```
+src/
+├── app/            # (auth) (dashboard) (marketing) (onboarding) + api routes
+├── lib/
+│   ├── ai/         # order-parser · menu-extractor · whisper · prompt-builder
+│   ├── whatsapp/   # inbound webhooks, outbound messaging
+│   ├── payments/   # Bizum · Redsys · Stripe
+│   ├── db/         # Drizzle schema + queries
+│   └── storage/
+└── components/
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Running it
+
+```bash
+npm install
+cp .env.example .env.local     # database, Clerk, model providers, WhatsApp, payments
+npm run dev
+```
+
+---
+
+## What I'd do differently
+
+Order parsing runs as a single model call per message with the conversation history replayed each time.
+For a two-line order that is fine; for a long back-and-forth with corrections ("actually make that
+three, no onions") it gets expensive and the failure modes are hard to reason about. I would restructure
+it as an explicit state machine over the order, with the model handling only the transitions — and I
+would build the evaluation harness first, because "did it parse this order correctly" is exactly the
+kind of question that needs a regression suite rather than spot checks.
