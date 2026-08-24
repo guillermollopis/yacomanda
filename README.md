@@ -9,7 +9,7 @@ The point was the 30% commission that delivery marketplaces charge. Restaurants 
 on WhatsApp — they just process them by hand.
 
 > **Status:** archived. A solo SaaS attempt I stopped working on, published as a portfolio piece rather
-> than a maintained product.
+> than a maintained product.ok
 
 ---
 
